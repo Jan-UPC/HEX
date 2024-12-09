@@ -57,6 +57,7 @@ public class RandomPlayer implements IPlayer, IAuto {
         for(  int i=0;i<s.getSize();i++){
           for(int k=0;k<s.getSize();k++){
               if(s.getPos(i, k)==0){
+                  if (freeCells==q) System.out.println("Random coloca a i="+i+" amb k="+k);
                   if(freeCells==q) return new PlayerMove( new Point(i,k), 0L, 0, SearchType.RANDOM);
                   freeCells++;
               }
