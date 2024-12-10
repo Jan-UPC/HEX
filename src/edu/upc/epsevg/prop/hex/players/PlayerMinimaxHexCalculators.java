@@ -5,6 +5,7 @@ import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.PlayerMove;
 import edu.upc.epsevg.prop.hex.SearchType;
 import java.awt.Point;
+import java.util.PriorityQueue;
 
 /**
  *
@@ -146,6 +147,56 @@ public class PlayerMinimaxHexCalculators implements IPlayer {
 
     private int heuristica(HexGameStatus estat, int color, int nivellsExplorats) {
         if (nivellsExplorats > _profExplorada) _profExplorada = nivellsExplorats;
+        int midaTauler = estat.getSize();
+        int[] distancies = new int[midaTauler*midaTauler];
+        PriorityQueue<Point> cua = new PriorityQueue<>((a,b)->distancies[a.x*midaTauler + a.y] - distancies[b.x*midaTauler + b.y]);
+        
+        // Inicialitzar vector de distàncies
+        for (int i = 0; i < midaTauler*midaTauler; i++) {
+            distancies[i] = INFINIT;
+            // Aprofitem el bucle per afegir també les caselles inicials de l'algorisme i actualitzar el vector distàncies per aquelles caselles
+            int columna = i/midaTauler; // també se li pot anomenar x
+            int fila = i%midaTauler; // també se li pot anomenar y
+            
+            if (color == 1 && columna == 0) {
+                // El jugador amb color "1" ha d'unir la banda esquerra (columna==0) amb la banda dreta (columna==midaTauler-1)
+                int colorCasella = estat.getPos(columna, fila);
+                if (colorCasella != -color) {
+                    // La casella té una fitxa del jugador de color 1 o està buida
+                    cua.add(new Point(columna, fila));
+                    if (colorCasella == color) {
+                        // Casella amb fitxa del jugador de color 1: té distància 0
+                        distancies[i] = 0;
+                    }
+                    else if (colorCasella == 0) {
+                        // Casella buida: té distància 1
+                        distancies[i] = 1;
+                    }
+                }
+            }
+            
+            if (color == -1 && fila == 0) {
+                // El jugador amb color "-1" ha d'unir la banda superior (fila==0) amb la banda inferior (fila==midaTauler-1)
+                int colorCasella = estat.getPos(columna, fila);
+                if (colorCasella != -color) {
+                    // La casella té una fitxa del jugador de color -1 o està buida
+                    cua.add(new Point(columna, fila));
+                    if (colorCasella == color) {
+                        // Casella amb fitxa del jugador de color -1: té distància 0
+                        distancies[i] = 0;
+                    }
+                    else if (colorCasella == 0) {
+                        // Casella buida: té distància 1
+                        distancies[i] = 1;
+                    }
+                }
+            }
+            
+        }
+        
+        // Algorisme de Dijkstra
+        
+        
         return 0;
     }
     
