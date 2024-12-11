@@ -62,6 +62,10 @@ public class RandomPlayer implements IPlayer, IAuto {
                       Point p = new Point(i,k);
                       System.out.println("Sí, coloca a x="+p.x+" amb y="+p.y);
                       System.out.println("Al jugador 2 li correspon el número"+s.getCurrentPlayerColor());
+                      /*ArrayList<Point> prova = s.getNeigh(new Point(1,0));
+                      for (int in=0; in < prova.size(); ++in) {
+                          System.out.println("Veins de 1,0: "+ prova.get(in).x+" "+prova.get(in).y);
+                      }*/
                   }
                   if(freeCells==q) return new PlayerMove( new Point(i,k), 0L, 0, SearchType.RANDOM);
                   freeCells++;

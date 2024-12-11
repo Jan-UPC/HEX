@@ -5,6 +5,7 @@ import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.PlayerMove;
 import edu.upc.epsevg.prop.hex.SearchType;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.PriorityQueue;
 
 /**
@@ -195,7 +196,44 @@ public class PlayerMinimaxHexCalculators implements IPlayer {
         }
         
         // Algorisme de Dijkstra
-        
+        while (!cua.isEmpty()) {
+            Point pActual = cua.poll();
+            int indexActual = pActual.x * midaTauler + pActual.y;
+            
+            if ((color == 1 && pActual.x == midaTauler-1) || (color == -1 && pActual.y == midaTauler-1)) {
+                // Hem arribat a l'altra banda del tauler, no necessitem explorar més
+                return distancies[indexActual];
+            }
+            
+            ArrayList<Point> veins = estat.getNeigh(pActual);
+            for (int i = 0; i < veins.size(); i++) {
+                Point vei = veins.get(i);
+                int columnaVei = vei.x;
+                int filaVei = vei.y;
+                int colorVei = estat.getPos(vei);
+                int indexVei = columnaVei*midaTauler + filaVei;
+                
+                if (colorVei != -color) {
+                    // La casella veïna té una fitxa del jugador de color "color" o està buida
+                    if (colorVei == color) {
+                        // Casella amb fitxa del jugador de color "color": té distància 0
+                        int nouCost = distancies[indexActual];
+                        if (nouCost < distancies[indexVei]) {
+                            distancies[indexVei] = nouCost;
+                            cua.add(vei);
+                        }
+                    }
+                    else if (colorVei == 0) {
+                        // Casella buida: té distància 1
+                        int nouCost = distancies[indexActual]+1;
+                        if (nouCost < distancies[indexVei]) {
+                            distancies[indexVei] = 1;
+                            cua.add(vei);
+                        }
+                    }
+                }
+            }
+        }
         
         return 0;
     }
