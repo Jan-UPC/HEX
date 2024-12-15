@@ -1,255 +1,219 @@
 package edu.upc.epsevg.prop.hex.players;
 
 import edu.upc.epsevg.prop.hex.HexGameStatus;
+import edu.upc.epsevg.prop.hex.IAuto;
 import edu.upc.epsevg.prop.hex.IPlayer;
+import edu.upc.epsevg.prop.hex.MoveNode;
 import edu.upc.epsevg.prop.hex.PlayerMove;
 import edu.upc.epsevg.prop.hex.SearchType;
+
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.PriorityQueue;
+import java.util.HashMap;
 
-/**
- *
- * @author Equip Hex
- */
-public class PlayerMinimaxHexCalculators implements IPlayer {
+public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
-    
-    int INFINIT = Integer.MAX_VALUE;    // Número molt gran que representa el infinit
+    private final int INFINIT = Integer.MAX_VALUE;
+    private final int MENYS_INFINIT = Integer.MIN_VALUE;
 
-    int MENYS_INFINIT = Integer.MIN_VALUE;    // Número molt petit que representa el menys infinit
-    
-    private String _name; // Nom del jugador
-    private int _colorPlayer; // Color del jugador, necessari per avaluar l'heurística
-    private int _profMax; // Número de nivells que explorarà el jugador en l'algorisme Minimax
-    private boolean _poda; // Si val true, el jugador realitzarà poda alfa-beta.
-    private int _nJugades; // Nombre de jugades (crides a move) que ha realitzat el jugador
-    private long _calculsHeuristica; // Nombre de vegades que s'ha calculat l'heurística
-    private int _profExplorada; // Nivell màxim de profunditat on s'ha arribat
-    
+    private String _name;
+    private int _colorPlayer;
+    private int _profMax;
+    private boolean _poda;
+    private Dijkstra dijkstra;
 
-    public PlayerMinimaxHexCalculators(String name, int profunditatMaxima, boolean poda) {
+    private TranspositionTable transpositionTable;
+
+
+    public PlayerMinimaxHexCalculators(String name, int profunditatMaxima, boolean poda, int boardSize) {
         this._name = name;
-        _profMax = profunditatMaxima;
-        _poda = poda;
-        _nJugades = 0;
-        _calculsHeuristica = 0;
-        _profExplorada = 0;
+        this._profMax = profunditatMaxima;
+        this._poda = poda;
+        this.dijkstra = new Dijkstra(boardSize);
+        this.transpositionTable = new TranspositionTable();
+        ZobristHashing.setBoardSize(boardSize);
     }
-    
-     /**
-     * Decideix el moviment del jugador donat un tauler, que conté informació sobre un color de peça que
-     * el color de peça que ha de posar.
-     *
-     * @param s Tauler i estat actual de joc.
-     * @return El moviment que fa el jugador.
-     */
+
     @Override
     public PlayerMove move(HexGameStatus s) {
         _colorPlayer = s.getCurrentPlayerColor();
-        int alfa = MENYS_INFINIT;
-        int beta = INFINIT;
-        Point tiradaFinal = new Point(-1, -1);
-        int hActual = MENYS_INFINIT;
-        int profExpl = 0;
-        
-        for (int i = 0; i < s.getSize(); ++i) {
-            // Bucle de les columnes
-            for (int j = 0; j < s.getSize(); ++j) {
-                // Bucle de les files
-                if (s.getPos(i, j) == 0) {
-                    HexGameStatus estatAux = new HexGameStatus(s);
-                    Point tiradaActual = new Point(i, j);
-                    estatAux.placeStone(tiradaActual); // Aquesta funció canvia el color del current player d'estatAux
-                    int hMin = MIN(estatAux, _profMax-1, profExpl+1, i, j, alfa, beta);
-                    if (hMin > hActual) {
-                        hActual = hMin;
-                        tiradaFinal = tiradaActual;
-                    }
-                }
-            }
-        }
-        
-        PlayerMove jugadaFinal = new PlayerMove(tiradaFinal, _calculsHeuristica, _profExplorada, SearchType.MINIMAX);
-        
-        return jugadaFinal;
-    }
-    
-    
-    private int MIN(HexGameStatus estat, int profunditat, int nivellsExplorats, int i, int j, int alpha, int beta) {
-        int millor_valor = INFINIT;
-        // int colorActual = estat.getCurrentPlayerColor();
 
-        if (estat.isGameOver()) return millor_valor;
-        else if (profunditat == 0) {
-            return heuristica(estat, _colorPlayer, nivellsExplorats);
-        } else {
-            for (int ii = 0; ii < estat.getSize(); ii++) {
-                // Bucle de les columnes
-                for (int jj = 0; jj < estat.getSize(); jj++) {
-                    // Bucle de les files
-                    if (estat.getPos(i, j)==0) {
-                        HexGameStatus estatAux = new HexGameStatus(estat);
-                        Point tirada = new Point(ii, jj);
-                        estatAux.placeStone(tirada);
-                        int h_actual = MAX(estatAux, profunditat-1, nivellsExplorats+1, ii, jj, alpha, beta);
-                        millor_valor = Math.min(millor_valor, h_actual);
-                        if (_poda) {
-                            beta = Math.min(millor_valor, beta);
-                            if (beta <= alpha) { // Fem poda
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (_poda) {
-                    if (beta <= alpha) { // Fem poda
-                        break;
-                    }
-                }
-            }
-        }
-    return millor_valor;
-    }
-    
-    private int MAX(HexGameStatus estat, int profunditat, int nivellsExplorats, int i, int j, int alpha, int beta) {
-        int millor_valor = MENYS_INFINIT;
-        // int colorActual = estat.getCurrentPlayerColor();
+        Point mejorMovimiento = null;
+        int mejorValor = MENYS_INFINIT;
 
-        if (estat.isGameOver()) return millor_valor;
-        else if (profunditat == 0) {
-            return heuristica(estat, _colorPlayer, nivellsExplorats);
-        } else {
-            for (int ii = 0; ii < estat.getSize(); ii++) {
-                for (int jj = 0; jj < estat.getSize(); jj++) {
-                    if (estat.getPos(i, j) == 0) {
-                        HexGameStatus estatAux = new HexGameStatus(estat);
-                        Point tirada = new Point(ii, jj);
-                        estatAux.placeStone(tirada);
-                        int h_actual = MIN(estatAux, profunditat-1, nivellsExplorats+1, ii, jj, alpha, beta);
-                        millor_valor = Math.max(millor_valor, h_actual);
-                        if (_poda) {
-                            alpha = Math.max(millor_valor, alpha);
-                            if (beta <= alpha) { // Fem poda
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (_poda) {
-                    if (beta <= alpha) { // Fem poda
-                        break;
-                    }
-                }
+        ArrayList<MoveNode> movimientos = ordenarMovimientos(s);
+
+        for (MoveNode movimiento : movimientos) {
+            HexGameStatus estadoAux = new HexGameStatus(s);
+            estadoAux.placeStone(movimiento.getPoint());
+
+            int hash = ZobristHashing.calculateHash(estadoAux);
+            Integer valorGuardado = transpositionTable.lookup(hash, _profMax);
+            if (valorGuardado != null) {
+                return new PlayerMove(movimiento.getPoint(), valorGuardado, _profMax, SearchType.MINIMAX);
+            }
+
+            int valor = MIN(estadoAux, _profMax - 1, MENYS_INFINIT, INFINIT);
+            transpositionTable.store(hash, _profMax, valor);
+
+            if (valor > mejorValor) {
+                mejorValor = valor;
+                mejorMovimiento = movimiento.getPoint();
             }
         }
-        return millor_valor;
+
+        if (mejorMovimiento == null && !movimientos.isEmpty()) {
+            mejorMovimiento = movimientos.get(0).getPoint();
+        }
+
+        return new PlayerMove(mejorMovimiento, mejorValor, _profMax, SearchType.MINIMAX);
     }
 
-    private int heuristica(HexGameStatus estat, int color, int nivellsExplorats) {
-        if (nivellsExplorats > _profExplorada) _profExplorada = nivellsExplorats;
-        int midaTauler = estat.getSize();
-        int[] distancies = new int[midaTauler*midaTauler];
-        PriorityQueue<Point> cua = new PriorityQueue<>((a,b)->distancies[a.x*midaTauler + a.y] - distancies[b.x*midaTauler + b.y]);
-        
-        // Inicialitzar vector de distàncies
-        for (int i = 0; i < midaTauler*midaTauler; i++) {
-            distancies[i] = INFINIT;
-            // Aprofitem el bucle per afegir també les caselles inicials de l'algorisme i actualitzar el vector distàncies per aquelles caselles
-            int columna = i/midaTauler; // també se li pot anomenar x
-            int fila = i%midaTauler; // també se li pot anomenar y
-            
-            if (color == 1 && columna == 0) {
-                // El jugador amb color "1" ha d'unir la banda esquerra (columna==0) amb la banda dreta (columna==midaTauler-1)
-                int colorCasella = estat.getPos(columna, fila);
-                if (colorCasella != -color) {
-                    // La casella té una fitxa del jugador de color 1 o està buida
-                    cua.add(new Point(columna, fila));
-                    if (colorCasella == color) {
-                        // Casella amb fitxa del jugador de color 1: té distància 0
-                        distancies[i] = 0;
-                    }
-                    else if (colorCasella == 0) {
-                        // Casella buida: té distància 1
-                        distancies[i] = 1;
-                    }
-                }
-            }
-            
-            if (color == -1 && fila == 0) {
-                // El jugador amb color "-1" ha d'unir la banda superior (fila==0) amb la banda inferior (fila==midaTauler-1)
-                int colorCasella = estat.getPos(columna, fila);
-                if (colorCasella != -color) {
-                    // La casella té una fitxa del jugador de color -1 o està buida
-                    cua.add(new Point(columna, fila));
-                    if (colorCasella == color) {
-                        // Casella amb fitxa del jugador de color -1: té distància 0
-                        distancies[i] = 0;
-                    }
-                    else if (colorCasella == 0) {
-                        // Casella buida: té distància 1
-                        distancies[i] = 1;
-                    }
-                }
-            }
-            
+    private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta) {
+        int hash = ZobristHashing.calculateHash(estado);
+        Integer valorGuardado = transpositionTable.lookup(hash, profundidad);
+        if (valorGuardado != null) return valorGuardado;
+
+        if (estado.isGameOver()) return (estado.GetWinner() == estado.getCurrentPlayer()) ? MENYS_INFINIT : INFINIT;
+        if (profundidad == 0) return heuristica(estado, -_colorPlayer);
+
+        int mejorValor = INFINIT;
+
+        for (MoveNode movimiento : estado.getMoves()) {
+            HexGameStatus estadoAux = new HexGameStatus(estado);
+            estadoAux.placeStone(movimiento.getPoint());
+            mejorValor = Math.min(mejorValor, MAX(estadoAux, profundidad - 1, alfa, beta));
+            beta = Math.min(beta, mejorValor);
+            if (_poda && beta <= alfa) break;
         }
-        
-        // Algorisme de Dijkstra
-        while (!cua.isEmpty()) {
-            Point pActual = cua.poll();
-            int indexActual = pActual.x * midaTauler + pActual.y;
-            
-            if ((color == 1 && pActual.x == midaTauler-1) || (color == -1 && pActual.y == midaTauler-1)) {
-                // Hem arribat a l'altra banda del tauler, no necessitem explorar més
-                return distancies[indexActual];
-            }
-            
-            ArrayList<Point> veins = estat.getNeigh(pActual);
-            for (int i = 0; i < veins.size(); i++) {
-                Point vei = veins.get(i);
-                int columnaVei = vei.x;
-                int filaVei = vei.y;
-                int colorVei = estat.getPos(vei);
-                int indexVei = columnaVei*midaTauler + filaVei;
-                
-                if (colorVei != -color) {
-                    // La casella veïna té una fitxa del jugador de color "color" o està buida
-                    if (colorVei == color) {
-                        // Casella amb fitxa del jugador de color "color": té distància 0
-                        int nouCost = distancies[indexActual];
-                        if (nouCost < distancies[indexVei]) {
-                            distancies[indexVei] = nouCost;
-                            cua.add(vei);
-                        }
-                    }
-                    else if (colorVei == 0) {
-                        // Casella buida: té distància 1
-                        int nouCost = distancies[indexActual]+1;
-                        if (nouCost < distancies[indexVei]) {
-                            distancies[indexVei] = 1;
-                            cua.add(vei);
-                        }
-                    }
-                }
-            }
-        }
-        
-        return 0;
-    }
-    
-    @Override
-    public void timeout() {
-        // A aquest jugador no li afecta el timeout, sempre explora una certa quantitat de nivells.
+
+        transpositionTable.store(hash, profundidad, mejorValor);
+        return mejorValor;
     }
 
-    /**
-     * Retorna el nom del jugador que s'utlilitza per visualització a la UI.
-     *
-     * @return Nom del jugador
-     */
+    private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta) {
+        int hash = ZobristHashing.calculateHash(estado);
+        Integer valorGuardado = transpositionTable.lookup(hash, profundidad);
+        if (valorGuardado != null) return valorGuardado;
+
+        if (estado.isGameOver()) return (estado.GetWinner() == estado.getCurrentPlayer()) ? INFINIT : MENYS_INFINIT;
+        if (profundidad == 0) return heuristica(estado, _colorPlayer);
+
+        int mejorValor = MENYS_INFINIT;
+
+        for (MoveNode movimiento : estado.getMoves()) {
+            HexGameStatus estadoAux = new HexGameStatus(estado);
+            estadoAux.placeStone(movimiento.getPoint());
+            mejorValor = Math.max(mejorValor, MIN(estadoAux, profundidad - 1, alfa, beta));
+            alfa = Math.max(alfa, mejorValor);
+            if (_poda && alfa >= beta) break;
+        }
+
+        transpositionTable.store(hash, profundidad, mejorValor);
+        return mejorValor;
+    }
+
+    public int heuristica(HexGameStatus estado, int color) {
+        int distanciaPropia = dijkstra.shortestPathWithVirtualNodes(estado, color);
+        int distanciaOponente = dijkstra.shortestPathWithVirtualNodes(estado, -color);
+
+        if (distanciaPropia == 0) return INFINIT;
+        if (distanciaOponente == 0) return MENYS_INFINIT;
+
+        //return 10 * (distanciaOponente - distanciaPropia);
+        return 10 * (distanciaOponente - distanciaPropia) + (estado.getSize() - distanciaPropia);
+
+    }
+
+    private ArrayList<MoveNode> ordenarMovimientos(HexGameStatus estado) {
+        ArrayList<MoveNode> movimientos = new ArrayList<>(estado.getMoves());
+
+        movimientos.sort((a, b) -> {
+            int heurA = evaluarMovimiento(estado, a.getPoint());
+            int heurB = evaluarMovimiento(estado, b.getPoint());
+            return Integer.compare(heurB, heurA);
+        });
+
+        return movimientos;
+    }
+
+    private int evaluarMovimiento(HexGameStatus estado, Point movimiento) {
+        HexGameStatus estadoAux = new HexGameStatus(estado);
+        estadoAux.placeStone(movimiento);
+
+        int distanciaPropia = dijkstra.shortestPathWithVirtualNodes(estadoAux, _colorPlayer);
+        int distanciaOponente = dijkstra.shortestPathWithVirtualNodes(estadoAux, -_colorPlayer);
+
+        //return 10 * (distanciaOponente - distanciaPropia);
+        return 10 * (distanciaOponente - distanciaPropia) + (estado.getSize() - distanciaPropia);
+    }
+
     @Override
     public String getName() {
-        return "Player(" + _name + ")";
+        return _name;
+    }
+
+    @Override
+    public void timeout() {
     }
 }
+
+class TranspositionTable {
+    private HashMap<Integer, Integer> table = new HashMap<>();
+
+    public void store(int hash, int depth, int value) {
+        table.put(hash ^ depth, value);
+    }
+
+    public Integer lookup(int hash, int depth) {
+        return table.getOrDefault(hash ^ depth, null);
+    }
+}
+
+class ZobristHashing {
+
+    private static int boardSize = 11; // Valor por defecto
+    private static int[][][] ZOBRIST_TABLE;
+
+    // Método para actualizar boardSize y regenerar ZOBRIST_TABLE
+    public static void setBoardSize(int newSize) {
+        boardSize = newSize;
+        generateZobristTable();
+    }
+
+    // Método que inicializa la tabla ZOBRIST_TABLE
+    private static void generateZobristTable() {
+        ZOBRIST_TABLE = new int[boardSize][boardSize][3];
+        java.util.Random random = new java.util.Random();
+
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                for (int k = 0; k < 3; k++) {
+                    ZOBRIST_TABLE[i][j][k] = random.nextInt();
+                }
+            }
+        }
+    }
+
+    // Constructor estático: inicializa ZOBRIST_TABLE con el tamaño inicial
+    static {
+        generateZobristTable();
+    }
+
+    // Cálculo del hash del estado actual
+    public static int calculateHash(HexGameStatus estado) {
+        int size = estado.getSize();
+        int hash = 0;
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                int pos = estado.getPos(i, j); // Obtener el valor de la casilla: 0, 1 o -1
+                int zobristIndex = (pos == 1) ? 1 : (pos == -1) ? 2 : 0; // 0 = vacío, 1 = jugador 1, 2 = jugador 2
+                hash ^= ZOBRIST_TABLE[i][j][zobristIndex]; // Actualización XOR del hash
+            }
+        }
+
+        return hash;
+    }
+}
+
