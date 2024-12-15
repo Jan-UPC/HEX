@@ -24,7 +24,6 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
     private TranspositionTable transpositionTable;
 
-
     public PlayerMinimaxHexCalculators(String name, int profunditatMaxima, boolean poda, int boardSize) {
         this._name = name;
         this._profMax = profunditatMaxima;
@@ -40,21 +39,24 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
         Point mejorMovimiento = null;
         int mejorValor = MENYS_INFINIT;
+        int hash = ZobristHashing.calculateHash(s);
 
-        ArrayList<MoveNode> movimientos = ordenarMovimientos(s);
+        ArrayList<MoveNode> movimientos = ordenarMovimientos(s, hash);
 
         for (MoveNode movimiento : movimientos) {
             HexGameStatus estadoAux = new HexGameStatus(s);
             estadoAux.placeStone(movimiento.getPoint());
 
-            int hash = ZobristHashing.calculateHash(estadoAux);
-            Integer valorGuardado = transpositionTable.lookup(hash, _profMax);
-            if (valorGuardado != null) {
-                return new PlayerMove(movimiento.getPoint(), valorGuardado, _profMax, SearchType.MINIMAX);
-            }
+            int newHash = ZobristHashing.updateHash(hash, movimiento.getPoint(), _colorPlayer);
+            TranspositionTable.TableEntry valorGuardado = transpositionTable.lookup(newHash);
 
-            int valor = MIN(estadoAux, _profMax - 1, MENYS_INFINIT, INFINIT);
-            transpositionTable.store(hash, _profMax, valor);
+            int valor;
+            if (valorGuardado != null && valorGuardado.depth >= _profMax - 1) {
+                valor = valorGuardado.value;
+            } else {
+                valor = MIN(estadoAux, _profMax - 1, MENYS_INFINIT, INFINIT, newHash);
+                transpositionTable.store(newHash, _profMax - 1, valor, TranspositionTable.EXACT, movimiento.getPoint());
+            }
 
             if (valor > mejorValor) {
                 mejorValor = valor;
@@ -69,10 +71,9 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         return new PlayerMove(mejorMovimiento, mejorValor, _profMax, SearchType.MINIMAX);
     }
 
-    private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta) {
-        int hash = ZobristHashing.calculateHash(estado);
-        Integer valorGuardado = transpositionTable.lookup(hash, profundidad);
-        if (valorGuardado != null) return valorGuardado;
+    private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
+        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+        if (entry != null && entry.depth >= profundidad) return entry.value;
 
         if (estado.isGameOver()) return (estado.GetWinner() == estado.getCurrentPlayer()) ? MENYS_INFINIT : INFINIT;
         if (profundidad == 0) return heuristica(estado, -_colorPlayer);
@@ -82,19 +83,21 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         for (MoveNode movimiento : estado.getMoves()) {
             HexGameStatus estadoAux = new HexGameStatus(estado);
             estadoAux.placeStone(movimiento.getPoint());
-            mejorValor = Math.min(mejorValor, MAX(estadoAux, profundidad - 1, alfa, beta));
+
+            int newHash = ZobristHashing.updateHash(hash, movimiento.getPoint(), -_colorPlayer);
+            mejorValor = Math.min(mejorValor, MAX(estadoAux, profundidad - 1, alfa, beta, newHash));
             beta = Math.min(beta, mejorValor);
+
             if (_poda && beta <= alfa) break;
         }
 
-        transpositionTable.store(hash, profundidad, mejorValor);
+        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.UPPERBOUND, null);
         return mejorValor;
     }
 
-    private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta) {
-        int hash = ZobristHashing.calculateHash(estado);
-        Integer valorGuardado = transpositionTable.lookup(hash, profundidad);
-        if (valorGuardado != null) return valorGuardado;
+    private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
+        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+        if (entry != null && entry.depth >= profundidad) return entry.value;
 
         if (estado.isGameOver()) return (estado.GetWinner() == estado.getCurrentPlayer()) ? INFINIT : MENYS_INFINIT;
         if (profundidad == 0) return heuristica(estado, _colorPlayer);
@@ -104,13 +107,31 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         for (MoveNode movimiento : estado.getMoves()) {
             HexGameStatus estadoAux = new HexGameStatus(estado);
             estadoAux.placeStone(movimiento.getPoint());
-            mejorValor = Math.max(mejorValor, MIN(estadoAux, profundidad - 1, alfa, beta));
+
+            int newHash = ZobristHashing.updateHash(hash, movimiento.getPoint(), _colorPlayer);
+            mejorValor = Math.max(mejorValor, MIN(estadoAux, profundidad - 1, alfa, beta, newHash));
             alfa = Math.max(alfa, mejorValor);
+
             if (_poda && alfa >= beta) break;
         }
 
-        transpositionTable.store(hash, profundidad, mejorValor);
+        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.LOWERBOUND, null);
         return mejorValor;
+    }
+
+    private ArrayList<MoveNode> ordenarMovimientos(HexGameStatus estado, int hash) {
+        ArrayList<MoveNode> movimientos = new ArrayList<>(estado.getMoves());
+        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+
+        movimientos.sort((a, b) -> {
+            if (entry != null && entry.bestMove != null) {
+                if (a.getPoint().equals(entry.bestMove)) return -1;
+                if (b.getPoint().equals(entry.bestMove)) return 1;
+            }
+            return 0; // Orden original si no hay entrada
+        });
+
+        return movimientos;
     }
 
     public int heuristica(HexGameStatus estado, int color) {
@@ -120,32 +141,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         if (distanciaPropia == 0) return INFINIT;
         if (distanciaOponente == 0) return MENYS_INFINIT;
 
-        //return 10 * (distanciaOponente - distanciaPropia);
-        return 10 * (distanciaOponente - distanciaPropia) + (estado.getSize() - distanciaPropia);
-
-    }
-
-    private ArrayList<MoveNode> ordenarMovimientos(HexGameStatus estado) {
-        ArrayList<MoveNode> movimientos = new ArrayList<>(estado.getMoves());
-
-        movimientos.sort((a, b) -> {
-            int heurA = evaluarMovimiento(estado, a.getPoint());
-            int heurB = evaluarMovimiento(estado, b.getPoint());
-            return Integer.compare(heurB, heurA);
-        });
-
-        return movimientos;
-    }
-
-    private int evaluarMovimiento(HexGameStatus estado, Point movimiento) {
-        HexGameStatus estadoAux = new HexGameStatus(estado);
-        estadoAux.placeStone(movimiento);
-
-        int distanciaPropia = dijkstra.shortestPathWithVirtualNodes(estadoAux, _colorPlayer);
-        int distanciaOponente = dijkstra.shortestPathWithVirtualNodes(estadoAux, -_colorPlayer);
-
-        //return 10 * (distanciaOponente - distanciaPropia);
-        return 10 * (distanciaOponente - distanciaPropia) + (estado.getSize() - distanciaPropia);
+        return 10 * (distanciaOponente - distanciaPropia);
     }
 
     @Override
@@ -159,61 +155,62 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 }
 
 class TranspositionTable {
-    private HashMap<Integer, Integer> table = new HashMap<>();
+    static final int EXACT = 0, LOWERBOUND = 1, UPPERBOUND = 2;
 
-    public void store(int hash, int depth, int value) {
-        table.put(hash ^ depth, value);
+    private HashMap<Integer, TableEntry> table = new HashMap<>();
+
+    public void store(int hash, int depth, int value, int type, Point bestMove) {
+        table.put(hash, new TableEntry(value, depth, type, bestMove));
     }
 
-    public Integer lookup(int hash, int depth) {
-        return table.getOrDefault(hash ^ depth, null);
+    public TableEntry lookup(int hash) {
+        return table.get(hash);
+    }
+
+    static class TableEntry {
+        int value, depth, type;
+        Point bestMove;
+
+        TableEntry(int value, int depth, int type, Point bestMove) {
+            this.value = value;
+            this.depth = depth;
+            this.type = type;
+            this.bestMove = bestMove;
+        }
     }
 }
 
 class ZobristHashing {
-
-    private static int boardSize = 11; // Valor por defecto
+    private static int boardSize = 11;
     private static int[][][] ZOBRIST_TABLE;
 
-    // Método para actualizar boardSize y regenerar ZOBRIST_TABLE
     public static void setBoardSize(int newSize) {
         boardSize = newSize;
         generateZobristTable();
     }
 
-    // Método que inicializa la tabla ZOBRIST_TABLE
     private static void generateZobristTable() {
         ZOBRIST_TABLE = new int[boardSize][boardSize][3];
         java.util.Random random = new java.util.Random();
-
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                for (int k = 0; k < 3; k++) {
+        for (int i = 0; i < boardSize; i++)
+            for (int j = 0; j < boardSize; j++)
+                for (int k = 0; k < 3; k++)
                     ZOBRIST_TABLE[i][j][k] = random.nextInt();
-                }
-            }
-        }
     }
 
-    // Constructor estático: inicializa ZOBRIST_TABLE con el tamaño inicial
-    static {
-        generateZobristTable();
-    }
-
-    // Cálculo del hash del estado actual
     public static int calculateHash(HexGameStatus estado) {
-        int size = estado.getSize();
         int hash = 0;
-
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                int pos = estado.getPos(i, j); // Obtener el valor de la casilla: 0, 1 o -1
-                int zobristIndex = (pos == 1) ? 1 : (pos == -1) ? 2 : 0; // 0 = vacío, 1 = jugador 1, 2 = jugador 2
-                hash ^= ZOBRIST_TABLE[i][j][zobristIndex]; // Actualización XOR del hash
+        for (int i = 0; i < estado.getSize(); i++)
+            for (int j = 0; j < estado.getSize(); j++) {
+                int pos = estado.getPos(i, j);
+                int index = (pos == 1) ? 1 : (pos == -1) ? 2 : 0;
+                hash ^= ZOBRIST_TABLE[i][j][index];
             }
-        }
-
         return hash;
     }
-}
 
+    public static int updateHash(int hash, Point move, int color) {
+        int index = (color == 1) ? 1 : 2;
+        return hash ^ ZOBRIST_TABLE[move.x][move.y][0] ^ ZOBRIST_TABLE[move.x][move.y][index];
+    }
+}
