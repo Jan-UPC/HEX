@@ -25,13 +25,13 @@ public class Game {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                final int midaTauler = 7;
+                final int midaTauler = 5;
                 
                 //IPlayer player2 = new H_E_X_Player(1/*GB*/);
                 IPlayer player2 = new RandomPlayer("Random");
-                IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 5, true, midaTauler);
+                IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 3, true);
                 // IPlayer player2 = new PlayerMinimax("HexCalculators", 4, false);
-                new Board(player1 , player2, midaTauler /*mida*/,  10/*s*/, false);
+                new Board(player1 , player2, midaTauler /*mida*/,  10/*s*/, true);
              }
         });
     }
