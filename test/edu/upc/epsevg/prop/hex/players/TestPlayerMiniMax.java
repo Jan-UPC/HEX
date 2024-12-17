@@ -60,7 +60,7 @@ public class TestPlayerMiniMax {
         PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("Test", 3, true);
 
         int heuristica = player.heuristica(gs, 1, 0);
-        System.out.println("Heurisitca con valor: " + heuristica);
+        System.out.println("testHeuristicaSimple: Heurisitca con valor: " + heuristica);
         assertTrue(heuristica > 0); // Ventaja para el jugador 1
     }
     
@@ -68,10 +68,10 @@ public class TestPlayerMiniMax {
     public void testHeuristicaSimple2() {
         byte[][] board = {
             { 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0 },
-            { 0, 0, 0, 0, 0 },
-            { 1, 1, 1, 1, 0 }
+              { 0, -1, 0, 0, 0 },
+               { 0, -1, 0, 0, 0 },
+                { 0, -1, 0, 0, 0 },
+                 { 1, 1, 1, 1, 0 }
         };
 
         HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);
@@ -99,8 +99,25 @@ public class TestPlayerMiniMax {
        PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("Test", 3, true);
 
        int heuristica = player.heuristica(gs, 1, 0);
-       System.out.println("testDijkstra1 heurisitca con valor: " + heuristica);
        System.out.println("testDijkstra1: " + distance);
        assertEquals(5, distance);
+    }
+    
+    @Test
+    public void testDijkstra_Bugeado_Player1() {
+        byte[][] board = {
+            { 1,  1,  1,  1,  1},
+              { 0,  0,  0,  0,  0},
+                { 0,  0,  0,  0,  0},
+                  { 0,  0,  0,  0,  0},
+                    { 0,  0,  0,  0,  0}
+        };
+
+        HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);
+        Dijkstra dijkstra = new Dijkstra();
+
+        int distance = dijkstra.shortestPathWithVirtualNodes(gs, 1);
+        System.out.println("testDijkstra_Bugeado_Player1: " + distance);
+        assertEquals(0, distance);
     }
 }

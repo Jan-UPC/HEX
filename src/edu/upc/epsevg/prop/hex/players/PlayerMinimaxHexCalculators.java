@@ -48,14 +48,15 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         //ArrayList<MoveNode> movimientos = ordenarMovimientos(s, hash);
         //for (MoveNode movimiento : movimientos) {
         for(MoveNode movimiento : movimientos){
-            System.out.println("Analizando: " + movimiento.getPoint().x + " " + movimiento.getPoint().y);
+            //System.out.println("Analizando: " + movimiento.getPoint().x + " " + movimiento.getPoint().y);
             Point punto = movimiento.getPoint();
             
             HexGameStatus estadoAux = new HexGameStatus(s);
             estadoAux.placeStone(punto);
             
             // **Comprobación de si el movimiento es ganador**
-            if (estadoAux.isGameOver() && estadoAux.GetWinner() == estadoAux.getCurrentPlayer()) {
+            if (estadoAux.isGameOver() && estadoAux.GetWinner() != estadoAux.getCurrentPlayer()) {
+                //System.out.println("Casilla ganadora");
                 return new PlayerMove(punto, INFINIT, _profMax, SearchType.MINIMAX);
             }
 
@@ -75,7 +76,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                 transpositionTable.store(newHash, _profMax - 1, valor, TranspositionTable.EXACT, punto);
             }*/
 
-            System.out.println("movimiento con valor: " + valor);
+            //System.out.println("movimiento con valor: " + valor);
             
             if (valor > mejorValor) {
                 mejorValor = valor;
@@ -91,7 +92,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         //TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         //if (entry != null && entry.depth >= profundidad) return entry.value;
 
-        if (profundidad == 0) return heuristica(estado, -_colorPlayer, nivelesExplorados);
+        if (profundidad == 0) return heuristica(estado, _colorPlayer, nivelesExplorados);
 
         int mejorValor = INFINIT;
 
@@ -215,11 +216,8 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         if (distanciaOponente == 0) return MENYS_INFINIT;
 
         
-        //return 10 * (distanciaPropia - distanciaOponente);
+        return 10 * (distanciaOponente - distanciaPropia);
         //return 10 * (distanciaOponente - distanciaPropia) + 2 * (estado.getSize() - distanciaPropia);
-        //return (estado.getSize() - distanciaPropia);
-        return distanciaPropia;
-
     }
 
     @Override
@@ -274,6 +272,7 @@ class ZobristHashing {
             for (int j = 0; j < boardSize; j++)
                 for (int k = 0; k < 3; k++)
                     ZOBRIST_TABLE[i][j][k] = random.nextInt();
+        
     }
 
     public static int calculateHash(HexGameStatus estado) {

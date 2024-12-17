@@ -58,10 +58,10 @@ public class RandomPlayer implements IPlayer, IAuto {
           for(int k=0;k<s.getSize();k++){
               if(s.getPos(i, k)==0){
                   if (freeCells==q) {
-                      System.out.println("Random coloca a i="+i+" amb k="+k);
+                      //System.out.println("Random coloca a i="+i+" amb k="+k);
                       Point p = new Point(i,k);
-                      System.out.println("Sí, coloca a x="+p.x+" amb y="+p.y);
-                      System.out.println("Al jugador 2 li correspon el número"+s.getCurrentPlayerColor());
+                      //System.out.println("Sí, coloca a x="+p.x+" amb y="+p.y);
+                      //System.out.println("Al jugador 2 li correspon el número"+s.getCurrentPlayerColor());
                       /*ArrayList<Point> prova = s.getNeigh(new Point(1,0));
                       for (int in=0; in < prova.size(); ++in) {
                           System.out.println("Veins de 1,0: "+ prova.get(in).x+" "+prova.get(in).y);
