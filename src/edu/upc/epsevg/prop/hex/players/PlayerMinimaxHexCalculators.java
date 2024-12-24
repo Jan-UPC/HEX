@@ -254,13 +254,15 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         int caminoPropio = result.shortestPath;
         int caminosViables = result.viablePathsCount;
         int caminoEnemigo = result.enemyShortestPath;
+        int caminosViablesEnemigo = result.viableEnemyPathsCount;
 
-        // Evaluar la heurística combinando todas las métricas
         if (caminoPropio == 0) return INFINIT;   // Victoria
         if (caminoEnemigo == 0) return MENYS_INFINIT; // Derrota inminente
 
-        // Combina el camino más corto, caminos viables y bloqueo
-        return (10 * (caminoEnemigo - caminoPropio)) + (5 * caminosViables);
+        // Ponderar la heurística considerando los caminos viables del enemigo
+        return (10 * (caminoEnemigo - caminoPropio)) 
+             + (7 * caminosViables) 
+             - (0 * caminosViablesEnemigo);
     }
 
 

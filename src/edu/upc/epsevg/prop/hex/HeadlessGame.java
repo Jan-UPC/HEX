@@ -29,11 +29,11 @@ public class HeadlessGame {
     public static void main(String[] args) {
         final int midaTauler = 5;
 
-        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  3, true);
-        //IPlayer player1 = new H_E_X_Player(2/*GB*/);
-        IPlayer player2 = new RandomPlayer("Random");
+        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, true);
+        IPlayer player2 = new H_E_X_Player(1/*GB*/);
+        //IPlayer player2 = new RandomPlayer("Random");
         
-        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 10/*s timeout*/, 40/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 10/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
 

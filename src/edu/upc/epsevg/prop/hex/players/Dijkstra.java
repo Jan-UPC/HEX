@@ -8,17 +8,20 @@ import java.util.PriorityQueue;
 public class Dijkstra {
     public int shortestPath;         // Camino más corto
     public int viablePathsCount;     // Número de caminos viables cercanos al óptimo
+    public int viableEnemyPathsCount; // Número de caminos viables cercanos al óptimo del enemigo
     public int enemyShortestPath;    // Camino más corto del enemigo
 
-    public Dijkstra(int shortestPath, int viablePathsCount, int enemyShortestPath) {
+    public Dijkstra(int shortestPath, int viablePathsCount, int viableEnemyPathsCount,  int enemyShortestPath) {
         this.shortestPath = shortestPath;
         this.viablePathsCount = viablePathsCount;
         this.enemyShortestPath = enemyShortestPath;
+        this.viableEnemyPathsCount = viableEnemyPathsCount;
     }
 
     public Dijkstra() {
         this.shortestPath = Integer.MAX_VALUE;
         this.viablePathsCount = 0;
+        this.viableEnemyPathsCount = 0;
         this.enemyShortestPath = Integer.MAX_VALUE;
     }
 
@@ -122,14 +125,19 @@ public class Dijkstra {
         }
 
         // Contar caminos viables
-        int viablePathsCount = 0;
+        viablePathsCount = 0;
+        viableEnemyPathsCount = 0;
         for (int i = 0; i < midaTauler * midaTauler; i++) {
             if (distancias[i] <= shortestPath + 1) {
                 viablePathsCount++;
             }
+            if (distanciasEnemigo[i] <= enemyShortestPath + 1) {
+                viableEnemyPathsCount++;
+            }
         }
 
-        return new Dijkstra(shortestPath, viablePathsCount, enemyShortestPath);
+
+        return new Dijkstra(shortestPath, viablePathsCount, viableEnemyPathsCount, enemyShortestPath);
     }
 
 }
