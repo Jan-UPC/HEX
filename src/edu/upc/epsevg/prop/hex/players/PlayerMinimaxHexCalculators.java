@@ -5,6 +5,7 @@ import edu.upc.epsevg.prop.hex.IAuto;
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.MoveNode;
 import edu.upc.epsevg.prop.hex.PlayerMove;
+import edu.upc.epsevg.prop.hex.PlayerType;
 import edu.upc.epsevg.prop.hex.SearchType;
 
 import java.awt.Point;
@@ -18,36 +19,45 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
     private final int MENYS_INFINIT = Integer.MIN_VALUE;
 
     private String _name;
+    private PlayerType _Player;
     private int _colorPlayer;
     private int _profMax;
     private boolean _poda;
-    private Dijkstra dijkstra;
+    private Dijkstra _dijkstra;
     int _profExpl;
     private TranspositionTable transpositionTable;
+    private int _nPodas;
 
     public PlayerMinimaxHexCalculators(String name, int profunditatMaxima, boolean poda) {
         this._name = name;
         this._profMax = profunditatMaxima;
         this._poda = poda;
         this._profExpl = 0;
-        this.dijkstra = new Dijkstra();
+        this._nPodas = 0;
+        this._dijkstra = new Dijkstra();
         //this.transpositionTable = new TranspositionTable();
         //ZobristHashing.setBoardSize(boardSize);
     }
 
     @Override
     public PlayerMove move(HexGameStatus s) {
+        //System.out.println("=============================================");
+        _Player = s.getCurrentPlayer();
         _colorPlayer = s.getCurrentPlayerColor();
 
-        List<MoveNode> movimientos = s.getMoves();
+        // Ordenar los movimientos usando la heurística actual
+        List<MoveNode> movimientos = ordenarMovimientos(s);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), 10); // Limitar a las 20 mejores jugadas
         Point mejorMovimiento = movimientos.get(movimientos.size()/2).getPoint();
         int mejorValor = MENYS_INFINIT;
         int profExpl = 0;
         //int hash = ZobristHashing.calculateHash(s);
 
-        //ArrayList<MoveNode> movimientos = ordenarMovimientos(s, hash);
         //for (MoveNode movimiento : movimientos) {
-        for(MoveNode movimiento : movimientos){
+        for (int i = 0; i < numMovimientosEvaluar; i++) {
+            MoveNode movimiento = movimientos.get(i);
+            _nPodas = 0;
+            //System.out.println("---------------------------------------------");
             //System.out.println("Analizando: " + movimiento.getPoint().x + " " + movimiento.getPoint().y);
             Point punto = movimiento.getPoint();
             
@@ -55,7 +65,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
             estadoAux.placeStone(punto);
             
             // **Comprobación de si el movimiento es ganador**
-            if (estadoAux.isGameOver() && estadoAux.GetWinner() != estadoAux.getCurrentPlayer()) {
+            if (estadoAux.isGameOver() && estadoAux.GetWinner() == _Player) {
                 //System.out.println("Casilla ganadora");
                 return new PlayerMove(punto, INFINIT, _profMax, SearchType.MINIMAX);
             }
@@ -77,7 +87,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
             }*/
 
             //System.out.println("movimiento con valor: " + valor);
-            
+            //System.out.println("numero de podas: " + _nPodas);
             if (valor > mejorValor) {
                 mejorValor = valor;
                 mejorMovimiento = punto;
@@ -89,10 +99,21 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
     //private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
     private int MIN(HexGameStatus estado, int profundidad, int nivelesExplorados, Point p,int alfa, int beta) {
+        /*if (estado.isGameOver()) {
+            if(estado.GetWinner() == _Player){
+                System.out.println("Casilla ganadora en MIN");
+                return INFINIT;
+            } else {
+                System.out.println("Casilla perdedora en MIN");
+                return MENYS_INFINIT;
+            }
+        } */
         //TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         //if (entry != null && entry.depth >= profundidad) return entry.value;
 
-        if (profundidad == 0) return heuristica(estado, _colorPlayer, nivelesExplorados);
+        if (profundidad == 0) {
+            return heuristica(estado, _colorPlayer, nivelesExplorados);
+        }
 
         int mejorValor = INFINIT;
 
@@ -110,6 +131,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                     if (_poda) {
                         beta = Math.min(mejorValor, beta);
                         if (beta <= alfa) { // Fem poda
+                            _nPodas++;
                             break;
                         }
                     }
@@ -117,6 +139,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
             }
             if (_poda) {
                     if (beta <= alfa) { // Fem poda
+                        _nPodas++;
                         break;
                     }
                 }
@@ -143,9 +166,18 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
     //private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
     private int MAX(HexGameStatus estado, int profundidad, int nivelesExplorados, Point p, int alfa, int beta){
+        /*if (estado.isGameOver()) {
+            if(estado.GetWinner() == _Player){
+                System.out.println("Casilla ganadora en MAX");
+                return INFINIT;
+            } else {
+                System.out.println("Casilla perdedora en MAX");
+                return MENYS_INFINIT;
+            }
+        } */
         //TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         //if (entry != null && entry.depth >= profundidad) return entry.value;
-
+        
         if (profundidad == 0) return heuristica(estado, _colorPlayer, nivelesExplorados);
 
         int mejorValor = MENYS_INFINIT;
@@ -164,6 +196,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                     if (_poda) {
                         beta = Math.max(mejorValor, beta);
                         if (beta <= alfa) { // Fem poda
+                            _nPodas++;
                             break;
                         }
                     }
@@ -171,6 +204,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
             }
             if (_poda) {
                     if (beta <= alfa) { // Fem poda
+                        _nPodas++;
                         break;
                     }
                 }
@@ -192,33 +226,43 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         return mejorValor;
     }
 
-    private ArrayList<MoveNode> ordenarMovimientos(HexGameStatus estado, int hash) {
-        ArrayList<MoveNode> movimientos = new ArrayList<>(estado.getMoves());
-        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+    /**
+    * Ordena los movimientos según la heurística actual.
+    */
+   private List<MoveNode> ordenarMovimientos(HexGameStatus estado) {
+       List<MoveNode> movimientos = estado.getMoves();
 
-        movimientos.sort((a, b) -> {
-            if (entry != null && entry.bestMove != null) {
-                if (a.getPoint().equals(entry.bestMove)) return -1;
-                if (b.getPoint().equals(entry.bestMove)) return 1;
-            }
-            return 0;
-        });
+       movimientos.sort((a, b) -> {
+           HexGameStatus estadoA = new HexGameStatus(estado);
+           HexGameStatus estadoB = new HexGameStatus(estado);
 
-        return movimientos;
-    }
+           estadoA.placeStone(a.getPoint());
+           estadoB.placeStone(b.getPoint());
+
+           int valorA = heuristica(estadoA, _colorPlayer, 0);
+           int valorB = heuristica(estadoB, _colorPlayer, 0);
+
+           return Integer.compare(valorB, valorA); // Ordenar de mayor a menor valor
+       });
+
+       return movimientos;
+   }
 
     public int heuristica(HexGameStatus estado, int color, int nivelesExplorados) {
-        if (nivelesExplorados > _profExpl) _profExpl = nivelesExplorados;
-        int distanciaPropia = dijkstra.shortestPathWithVirtualNodes(estado, color);
-        int distanciaOponente = dijkstra.shortestPathWithVirtualNodes(estado, -color);
+        Dijkstra result = _dijkstra.shortestPathWithVirtualNodes(estado, color);
 
-        if (distanciaPropia == 0) return INFINIT;
-        if (distanciaOponente == 0) return MENYS_INFINIT;
+        int caminoPropio = result.shortestPath;
+        int caminosViables = result.viablePathsCount;
+        int caminoEnemigo = result.enemyShortestPath;
 
-        
-        return 10 * (distanciaOponente - distanciaPropia);
-        //return 10 * (distanciaOponente - distanciaPropia) + 2 * (estado.getSize() - distanciaPropia);
+        // Evaluar la heurística combinando todas las métricas
+        if (caminoPropio == 0) return INFINIT;   // Victoria
+        if (caminoEnemigo == 0) return MENYS_INFINIT; // Derrota inminente
+
+        // Combina el camino más corto, caminos viables y bloqueo
+        return (10 * (caminoEnemigo - caminoPropio)) + (5 * caminosViables);
     }
+
 
     @Override
     public String getName() {
