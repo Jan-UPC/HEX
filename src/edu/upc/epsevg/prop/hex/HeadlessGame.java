@@ -29,7 +29,7 @@ public class HeadlessGame {
     public static void main(String[] args) {
         final int midaTauler = 5;
 
-        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, true);
+        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, midaTauler);
         IPlayer player2 = new H_E_X_Player(1/*GB*/);
         //IPlayer player2 = new RandomPlayer("Random");
         

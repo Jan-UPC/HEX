@@ -29,7 +29,7 @@ public class Game {
                 
                 IPlayer player2 = new H_E_X_Player(1/*GB*/);
                 //IPlayer player2 = new RandomPlayer("Random");
-                IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 5, true);
+                IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 7, midaTauler);
                 // IPlayer player2 = new PlayerMinimax("HexCalculators", 4, false);
                 new Board(player1 , player2, midaTauler /*mida*/,  10/*s*/, false);
              }
