@@ -4,7 +4,9 @@ package edu.upc.epsevg.prop.hex;
 
 import edu.upc.epsevg.prop.hex.players.H_E_X_Player;
 import edu.upc.epsevg.prop.hex.players.HumanPlayer;
+import edu.upc.epsevg.prop.hex.players.PlayerIDHexCalculators;
 import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculators;
+import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculatorsSINOPTIMIZAR;
 import edu.upc.epsevg.prop.hex.players.RandomPlayer;
 import java.lang.ref.WeakReference;
 
@@ -29,11 +31,12 @@ public class HeadlessGame {
     public static void main(String[] args) {
         final int midaTauler = 5;
 
-        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, midaTauler);
-        IPlayer player2 = new H_E_X_Player(1/*GB*/);
-        //IPlayer player2 = new RandomPlayer("Random");
+        //IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, midaTauler);
+        //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
+        IPlayer player1 = new PlayerIDHexCalculators("ID", midaTauler);
+        IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
-        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 10/*s timeout*/, 10/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
 

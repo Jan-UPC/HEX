@@ -6,7 +6,9 @@ import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.IPlayer;
 import edu.upc.epsevg.prop.hex.players.H_E_X_Player;
+import edu.upc.epsevg.prop.hex.players.PlayerIDHexCalculators;
 import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculators;
+import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculatorsSINOPTIMIZAR;
 
 
 
@@ -25,12 +27,12 @@ public class Game {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                final int midaTauler = 5;
+                final int midaTauler = 11;
                 
-                IPlayer player2 = new H_E_X_Player(1/*GB*/);
-                //IPlayer player2 = new RandomPlayer("Random");
-                IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 7, midaTauler);
-                // IPlayer player2 = new PlayerMinimax("HexCalculators", 4, false);
+                IPlayer player2 = new H_E_X_Player(2/*GB*/);
+                //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 5, midaTauler);
+                IPlayer player1 = new PlayerIDHexCalculators("ID", midaTauler);
+                //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
                 new Board(player1 , player2, midaTauler /*mida*/,  10/*s*/, false);
              }
         });
