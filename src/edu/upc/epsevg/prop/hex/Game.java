@@ -33,7 +33,7 @@ public class Game {
                 //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMax", 5, midaTauler);
                 IPlayer player1 = new PlayerIDHexCalculators("ID", midaTauler);
                 //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
-                new Board(player1 , player2, midaTauler /*mida*/,  10/*s*/, false);
+                new Board(player1 , player2, midaTauler /*mida*/,  13/*s*/, false);
              }
         });
     }

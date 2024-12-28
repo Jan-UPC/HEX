@@ -30,13 +30,13 @@ public class HeadlessGame {
     
     public static void main(String[] args) {
         final int midaTauler = 5;
-
+        System.out.println("****DE_SERIE****");
         //IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, midaTauler);
         //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
         IPlayer player1 = new PlayerIDHexCalculators("ID", midaTauler);
         IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
-        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 10/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 100/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
 

@@ -41,16 +41,19 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
         // Configurar timeout
         timeoutTriggered = false;
-        timeoutLimit = System.currentTimeMillis() + 13000; // Timeout en 4.5 segundos
+        timeoutLimit = System.currentTimeMillis() + 4500; // Timeout en 4.5 segundos
 
         Point mejorMovimiento = null;
         int mejorValor = MENYS_INFINIT;
+
+        // Hash inicial para el estado actual
+        long hash = ZobristHashing.calculateHash(s);
 
         // Iterative Deepening
         for (int depth = 1; !timeoutTriggered; depth++) {
             _profMax = depth;
             try {
-                Point movimientoActual = realizarBusqueda(s, depth);
+                Point movimientoActual = realizarBusqueda(s, hash, depth);
                 mejorMovimiento = movimientoActual;
                 mejorValor = heuristica(s, _colorPlayer, 0);
             } catch (TimeoutException e) {
@@ -61,7 +64,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         return new PlayerMove(mejorMovimiento, mejorValor, _profMax, SearchType.MINIMAX);
     }
 
-    private Point realizarBusqueda(HexGameStatus s, int profundidad) throws TimeoutException {
+    private Point realizarBusqueda(HexGameStatus s, long hash, int profundidad) throws TimeoutException {
         List<MoveNode> movimientos = ordenarMovimientos(s);
         Point mejorMovimiento = movimientos.get(0).getPoint();
         int mejorValor = MENYS_INFINIT;
@@ -76,7 +79,9 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
             HexGameStatus estadoAux = new HexGameStatus(s);
             estadoAux.placeStone(punto);
 
-            int valor = MIN(estadoAux, profundidad - 1, MENYS_INFINIT, INFINIT);
+            long newHash = ZobristHashing.updateHash(hash, punto, s.getPos(punto.x, punto.y), _colorPlayer);
+
+            int valor = MIN(estadoAux, profundidad - 1, MENYS_INFINIT, INFINIT, newHash);
 
             if (valor > mejorValor) {
                 mejorValor = valor;
@@ -86,16 +91,34 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         return mejorMovimiento;
     }
 
-    private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta) throws TimeoutException {
+    private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta, long hash) throws TimeoutException {
         if (System.currentTimeMillis() >= timeoutLimit) {
             timeoutTriggered = true;
             throw new TimeoutException("Timeout alcanzado en MIN.");
         }
 
-        if (profundidad == 0 || estado.isGameOver()) {
-            return heuristica(estado, _colorPlayer, 0);
+        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+        if (entry != null && entry.depth >= profundidad) {
+            switch (entry.flag) {
+                case TranspositionTable.EXACT:
+                    return entry.value;
+                case TranspositionTable.LOWER_BOUND:
+                    alfa = Math.max(alfa, entry.value);
+                    break;
+                case TranspositionTable.UPPER_BOUND:
+                    beta = Math.min(beta, entry.value);
+                    break;
+            }
+            if (alfa >= beta) return entry.value;
         }
 
+        if (profundidad == 0 || estado.isGameOver()) {
+            int heuristica = heuristica(estado, _colorPlayer, 0);
+            transpositionTable.store(hash, profundidad, heuristica, TranspositionTable.EXACT, null);
+            return heuristica;
+        }
+
+        Point mejorMovimiento = null;
         int mejorValor = INFINIT;
         for (int x = 0; x < estado.getSize(); x++) {
             for (int y = 0; y < estado.getSize(); y++) {
@@ -104,29 +127,54 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                     Point punto = new Point(x, y);
                     estadoAux.placeStone(punto);
 
-                    int valor = MAX(estadoAux, profundidad - 1, alfa, beta);
-                    mejorValor = Math.min(mejorValor, valor);
+                    long newHash = ZobristHashing.updateHash(hash, punto, estado.getPos(x, y), estado.getCurrentPlayerColor());
 
-                    if (mejorValor <= alfa) {
-                        return mejorValor; // Poda
+                    int valor = MAX(estadoAux, profundidad - 1, alfa, beta, newHash);
+                    if(valor < mejorValor){
+                        mejorValor = valor;
+                        mejorMovimiento = punto;
                     }
+
                     beta = Math.min(beta, mejorValor);
+                    if (beta <= alfa) {
+                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.UPPER_BOUND, mejorMovimiento);
+                        return mejorValor;
+                    }
                 }
             }
         }
+        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, mejorMovimiento);
         return mejorValor;
     }
 
-    private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta) throws TimeoutException {
+    private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta, long hash) throws TimeoutException {
         if (System.currentTimeMillis() >= timeoutLimit) {
             timeoutTriggered = true;
             throw new TimeoutException("Timeout alcanzado en MAX.");
         }
 
-        if (profundidad == 0 || estado.isGameOver()) {
-            return heuristica(estado, _colorPlayer, 0);
+        TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
+        if (entry != null && entry.depth >= profundidad) {
+            switch (entry.flag) {
+                case TranspositionTable.EXACT:
+                    return entry.value;
+                case TranspositionTable.LOWER_BOUND:
+                    alfa = Math.max(alfa, entry.value);
+                    break;
+                case TranspositionTable.UPPER_BOUND:
+                    beta = Math.min(beta, entry.value);
+                    break;
+            }
+            if (alfa >= beta) return entry.value;
         }
 
+        if (profundidad == 0 || estado.isGameOver()) {
+            int heuristica = heuristica(estado, _colorPlayer, 0);
+            transpositionTable.store(hash, profundidad, heuristica, TranspositionTable.EXACT, null);
+            return heuristica;
+        }
+
+        Point mejorMovimiento = null;
         int mejorValor = MENYS_INFINIT;
         for (int x = 0; x < estado.getSize(); x++) {
             for (int y = 0; y < estado.getSize(); y++) {
@@ -135,16 +183,23 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                     Point punto = new Point(x, y);
                     estadoAux.placeStone(punto);
 
-                    int valor = MIN(estadoAux, profundidad - 1, alfa, beta);
-                    mejorValor = Math.max(mejorValor, valor);
+                    long newHash = ZobristHashing.updateHash(hash, punto, estado.getPos(x, y), estado.getCurrentPlayerColor());
 
-                    if (mejorValor >= beta) {
-                        return mejorValor; // Poda
+                    int valor = MIN(estadoAux, profundidad - 1, alfa, beta, newHash);
+                    if(valor > mejorValor){
+                        mejorValor = valor;
+                        mejorMovimiento = punto;
                     }
+
                     alfa = Math.max(alfa, mejorValor);
+                    if (alfa >= beta) {
+                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.LOWER_BOUND, mejorMovimiento);
+                        return mejorValor;
+                    }
                 }
             }
         }
+        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, mejorMovimiento);
         return mejorValor;
     }
 
@@ -178,10 +233,10 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         if (caminoPropio == 0) return INFINIT;   // Victoria
         if (caminoEnemigo == 0) return MENYS_INFINIT; // Derrota inminente
 
-        return (10 * (estado.getSize() - caminoPropio)) 
-             + (7 * caminosViables) 
+        return (7 * (estado.getSize() - caminoPropio)) 
+             + (6 * caminosViables) 
              - (5 * (estado.getSize() - caminoEnemigo))
-             - (3 * caminosViablesEnemigo);
+             - (4 * caminosViablesEnemigo);
     }
 
     @Override
@@ -194,6 +249,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         timeoutTriggered = true;
     }
 }
+
 
 class TimeoutException extends Exception {
     public TimeoutException(String message) {
