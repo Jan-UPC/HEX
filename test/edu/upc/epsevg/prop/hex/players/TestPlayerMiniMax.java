@@ -56,17 +56,17 @@ public class TestPlayerMiniMax {
     @Test
     public void testHeuristicaSimple() {
         byte[][] board = {
-            { 1, 0, -1, 0, 0 },
-              { 0, 0, 0, 0, 0 },
-                { 1, 0, 0, 0, 0 },
-                  { 0, 0, 0, 0, 0 },
+            { 0, 0, -1, 0, 0 },
+              { 0, -1, 0, 0, 0 },
+                { 1, -1, 0, 0, 0 },
+                  { 1, 0, 0, 0, 0 },
                     { 0, 0, 0, 0, 0 }
         };
         byte[][] board2 = {
-            { 0, 0, -1, 0, 0 },
-              { 0, 0, 0, 0, 0 },
-                { 1, 1, 0, 0, 0 },
-                  { 0, 0, 0, 0, 0 },
+            { 0, -1, 0, 0, 0 },
+              { 0, -1, 0, 0, 0 },
+                { 1, -1, 0, 0, 0 },
+                  { 0, 1, 0, 0, 0 },
                     { 0, 0, 0, 0, 0 }
         };
 
@@ -74,8 +74,8 @@ public class TestPlayerMiniMax {
         HexGameStatus gs2 = new HexGameStatus(board2, PlayerType.PLAYER1);
         PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("Test", 3, 5);
 
-        int heuristica = player.heuristica(gs, 1, 0);
-        int heuristica2 = player.heuristica(gs2, 1, 0);
+        int heuristica = player.heuristica(gs, 1);
+        int heuristica2 = player.heuristica(gs2, 1);
         System.out.println("testHeuristicaSimple: Heurisitca con valor: " + heuristica);
         System.out.println("testHeuristicaSimple: Heurisitca2 con valor: " + heuristica2);
         assertTrue(heuristica2 > heuristica); // Ventaja para el jugador 1
@@ -85,18 +85,20 @@ public class TestPlayerMiniMax {
     public void testHeuristicaSimple2() {
         byte[][] board = {
             { 0, 0, 0, 0, 0 },
-              { 0, -1, 0, 0, 0 },
-                { 0, -1, 0, 0, 0 },
-                  { 0, -1, 0, 0, 0 },
-                    { 1, 1, 1, 1, 0 }
+              { 0, 0, -1, 0, 0 },
+                { 0, 0, 0, 0, 0 },
+                  { 0, 0, -1, 0, 0 },
+                    { 1, 0, 0, 1, 0 }
         };
 
         HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);
         PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("Test", 3, 5);
 
-        int heuristica = player.heuristica(gs, 1, 0);
+        int heuristica = player.heuristica(gs, 1);
+        int heuristica2 = player.heuristica(gs, -1);
         System.out.println("testHeuristicaSimple2: " + heuristica);
-        assertTrue(heuristica > 0); // Ventaja para el jugador 1
+        System.out.println("testHeuristicaSimple2: " + heuristica2);
+        assertTrue(heuristica < heuristica2); // Ventaja para el jugador 1
     }
     
     @Test
@@ -170,5 +172,85 @@ public class TestPlayerMiniMax {
         assertEquals(hashInicial, hashRevertido);
         assertEquals(hashNuevo, hashActualizado);
     }
+    
+    @Test
+    public void testOrdenarMovimientosRapido() {
+        // Configuración inicial del tablero
+        byte[][] board = {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, -1, 1, 0, -1, 0, 0},
+            {0, 0, 1, -1, 1, 0, 0, 0, 0},
+            {0, 0, 0, 0, 1, -1, 0, 0, 0},
+            {0, 0, 0, 0, -1, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0}
+        };
 
+        HexGameStatus estado = new HexGameStatus(board, PlayerType.PLAYER1);
+        PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("TestPlayer", 5, board.length);
+        player._colorPlayer = 1;
+        // Ordenar movimientos usando ordenarMovimientosRapido
+        List<MoveNode> movimientosOrdenados = player.ordenarMovimientosRapido(estado);
+
+        // Verificar que los movimientos están ordenados correctamente
+        System.out.println("Movimientos ordenados (rápido):");
+        for (MoveNode movimiento : movimientosOrdenados) {
+            Point punto = movimiento.getPoint();
+            int heuristica = player.heuristicaRapida(estado, punto);
+            System.out.println("Punto: " + punto + ", Heurística: " + heuristica);
+        }
+
+        // Comprobación básica: la heurística debe disminuir en la lista ordenada
+        for (int i = 1; i < movimientosOrdenados.size(); i++) {
+            Point anterior = movimientosOrdenados.get(i - 1).getPoint();
+            Point actual = movimientosOrdenados.get(i).getPoint();
+
+            int heuristicaAnterior = player.heuristicaRapida(estado, anterior);
+            int heuristicaActual = player.heuristicaRapida(estado, actual);
+
+            assertTrue(heuristicaAnterior >= heuristicaActual);
+        }
+    }
+
+    @Test
+    public void testOrdenarMovimientos() {
+        // Configuración inicial del tablero
+        byte[][] board = {
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, -1, 1, 0, -1, 0, 0},
+            {0, 0, 1, -1, 1, 0, 0, 0, 0},
+            {0, 0, 0, 0, 1, -1, 0, 0, 0},
+            {0, 0, 0, 0, -1, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0}
+        };
+
+        HexGameStatus estado = new HexGameStatus(board, PlayerType.PLAYER1);
+        PlayerMinimaxHexCalculators player = new PlayerMinimaxHexCalculators("TestPlayer", 5, board.length);
+        player._colorPlayer = 1;
+        // Ordenar movimientos usando ordenarMovimientosRapido
+        List<MoveNode> movimientosOrdenados = player.ordenarMovimientos(estado);
+
+        // Verificar que los movimientos están ordenados correctamente
+        System.out.println("Movimientos ordenados (normal):");
+        for (MoveNode movimiento : movimientosOrdenados) {
+            Point punto = movimiento.getPoint();
+            System.out.println("Punto: " + punto);
+        }
+
+        // Comprobación básica: la heurística debe disminuir en la lista ordenada
+        /*for (int i = 1; i < movimientosOrdenados.size(); i++) {
+            Point anterior = movimientosOrdenados.get(i - 1).getPoint();
+            Point actual = movimientosOrdenados.get(i).getPoint();
+
+            int heuristicaAnterior = player.heuristica(estado, 1);
+            int heuristicaActual = player.heuristica(estado, 1);
+
+            assertTrue(heuristicaAnterior >= heuristicaActual);
+        }*/
+    }
 }

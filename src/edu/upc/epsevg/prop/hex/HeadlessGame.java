@@ -29,16 +29,16 @@ public class HeadlessGame {
     private int size;
     
     public static void main(String[] args) {
-        final int midaTauler = 5;
-        System.out.println("****DE_SERIE****");
-        //IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator",  5, midaTauler);
-        //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
-        IPlayer player1 = new PlayerIDHexCalculators("ID", midaTauler);
+        final int midaTauler = 7;
+        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator", 7, midaTauler);
+        //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 4, true);
+        //IPlayer player1 = new PlayerIDHexCalculators("IDS", midaTauler);
         IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
-        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 100/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 1/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
+        System.out.println("Ordenando movimientos iniciales con OrdenacionRapida + HeurisitcaRapida Actualizada + Heuristica Actualizada");
 
     }
 

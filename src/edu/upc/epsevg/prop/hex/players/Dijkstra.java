@@ -128,10 +128,10 @@ public class Dijkstra {
         viablePathsCount = 0;
         viableEnemyPathsCount = 0;
         for (int i = 0; i < midaTauler * midaTauler; i++) {
-            if (distancias[i] <= shortestPath + 1) {
+            if (distancias[i] <= shortestPath) {
                 viablePathsCount++;
             }
-            if (distanciasEnemigo[i] <= enemyShortestPath + 1) {
+            if (distanciasEnemigo[i] <= enemyShortestPath) {
                 viableEnemyPathsCount++;
             }
         }

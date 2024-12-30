@@ -149,14 +149,8 @@ public class PlayerMinimaxHexCalculatorsSINOPTIMIZAR implements IPlayer, IAuto {
 
     //private int MAX(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
     private int MAX(HexGameStatus estado, int profundidad, int nivelesExplorados, Point p, int alfa, int beta){
-        /*if (estado.isGameOver()) {
-            if(estado.GetWinner() == _Player){
-                System.out.println("Casilla ganadora en MAX");
-                return INFINIT;
-            } else {
-                System.out.println("Casilla perdedora en MAX");
-                return MENYS_INFINIT;
-            }
+        /*if (estado.isGameOver() && estado.GetWinner() == _Player) {
+            return INFINIT;
         } */
         //TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         //if (entry != null && entry.depth >= profundidad) return entry.value;
@@ -195,19 +189,6 @@ public class PlayerMinimaxHexCalculatorsSINOPTIMIZAR implements IPlayer, IAuto {
                     }
                 }
         }
-        
-        /*for (MoveNode movimiento : estado.getMoves()) {
-            Point punto = movimiento.getPoint();
-            int newHash = ZobristHashing.updateHash(hash, punto, _colorPlayer);
-
-            HexGameStatus estadoAux = new HexGameStatus(estado);
-            estadoAux.placeStone(punto);
-
-            mejorValor = Math.max(mejorValor, MIN(estadoAux, profundidad - 1, alfa, beta, newHash));
-            alfa = Math.max(alfa, mejorValor);
-
-            if (_poda && alfa >= beta) break;
-        }*/
 
         return mejorValor;
     }

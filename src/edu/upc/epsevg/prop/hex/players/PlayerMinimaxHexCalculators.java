@@ -21,7 +21,10 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
     private String _name;
     private PlayerType _Player;
-    private int _colorPlayer;
+    private int _totalTime;
+    int _colorPlayer;
+    private int _nMoves;
+    int _nNodes;
     private int _profMax;
     private Dijkstra _dijkstra;
     int _profExpl;
@@ -32,7 +35,10 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         this._name = name;
         this._profMax = profunditatMaxima;
         this._profExpl = 0;
+        this._nMoves = 0;
+        this._nNodes = 0;
         this._nPodas = 0;
+        this._totalTime = 0;
         this._dijkstra = new Dijkstra();
         this.transpositionTable = new TranspositionTable();
         ZobristHashing.setBoardSize(boardSize);
@@ -40,10 +46,12 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
     @Override
     public PlayerMove move(HexGameStatus s) {
+        _nNodes = 0;
+        _nMoves++;
         //System.out.println("=============================================");
         _Player = s.getCurrentPlayer();
         _colorPlayer = s.getCurrentPlayerColor();
-        
+        long initialTime = System.currentTimeMillis();
         // Calculamos el hash inicial
         long hash = ZobristHashing.calculateHash(s);
         //System.out.println("Hash inicial calculado: " + hash);
@@ -57,14 +65,20 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         }*/
         
         // Ordenar los movimientos usando la heurística actual
-        List<MoveNode> movimientos = ordenarMovimientos(s);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 20); // Limitar a las 20 mejores jugadas
+        List<MoveNode> movimientos = null;
+        if(_nMoves < 3){
+            movimientos = ordenarMovimientosRapido(s);
+        } else {
+            movimientos = ordenarMovimientos(s);
+        }
+        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/s.getSize())));
         Point mejorMovimiento = movimientos.get(movimientos.size()/2).getPoint();
         int mejorValor = MENYS_INFINIT;
         int profExpl = 0;
 
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             _nPodas = 0;
+            _nNodes++;
             MoveNode movimiento = movimientos.get(i);
             
             //System.out.println("---------------------------------------------");
@@ -78,11 +92,18 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
             
             // **Comprobación de si el movimiento es ganador**
             if (estadoAux.isGameOver() && estadoAux.GetWinner() == _Player) {
-                //System.out.println("Casilla ganadora!");
-                return new PlayerMove(punto, INFINIT, _profMax, SearchType.MINIMAX);
+                long finalTime = System.currentTimeMillis();
+                long realTime = finalTime - initialTime;
+                _totalTime += realTime;
+                double estadistica = (_totalTime)/_nMoves;
+                System.out.println("Tiempo total del movimiento en ms: " + realTime);
+                System.out.println("Tiempo total del juego en ms: " + _totalTime);
+                System.out.println("Numero total de movimientos: " + _nMoves);
+                System.out.println("Estadistica ms/moves: " + estadistica);
+                return new PlayerMove(punto, _nNodes, _profExpl, SearchType.MINIMAX);
             }
             
-            int valor = MAX(estadoAux, _profMax - 1, profExpl+1, MENYS_INFINIT, INFINIT, newHash);
+            int valor = MIN(estadoAux, _profMax - 1, profExpl+1, MENYS_INFINIT, INFINIT, newHash);
             //System.out.println("Valor obtenido tras movimiento " + punto + ": " + valor);
             
             //System.out.println("movimiento con valor: " + valor);
@@ -95,27 +116,48 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
         // Almacenar el mejor resultado en la tabla de transposición
         transpositionTable.store(hash, profExpl, mejorValor, TranspositionTable.EXACT, mejorMovimiento);
-        //System.out.println("Guardando en tabla de transposición (move): hash=" + hash + ", valor=" + mejorValor);
-        return new PlayerMove(mejorMovimiento, mejorValor, profExpl, SearchType.MINIMAX);
+        long finalTime = System.currentTimeMillis();
+        long realTime = finalTime - initialTime;
+        _totalTime += realTime;
+        double estadistica = (_totalTime)/_nMoves;
+        System.out.println("Tiempo total del movimiento en ms: " + realTime);
+        System.out.println("Tiempo total del juego en ms: " + _totalTime);
+        System.out.println("Numero total de movimientos: " + _nMoves);
+        System.out.println("Estadistica ms/moves: " + estadistica);
+        return new PlayerMove(mejorMovimiento, _nNodes, _profExpl, SearchType.MINIMAX);
     }
 
     //private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
-    private int MIN(HexGameStatus estado, int profundidad, int nivelesExplorados,int alfa, int beta, long hash) {
+    private int MIN(HexGameStatus estado, int profundidad, int nivelesExplorados,int alfa, int beta, long hash) {  
+        _nNodes++;
+        if (estado.isGameOver() && estado.GetWinner() == _Player) {
+            return INFINIT;
+        }
         
         TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         Point mejorPunto = null;
-        if (entry != null && entry.depth >= profundidad) {
-            //System.out.println("Entrada encontrada en MIN para hash: " + hash + ", valor: " + entry.value);
+        if (entry != null) {
+            //System.out.println("Entrada encontrada " + entry.flag);
             switch (entry.flag) {
                 case TranspositionTable.EXACT:
-                    return entry.value;
-                case TranspositionTable.LOWER_BOUND:
-                    alfa = Math.max(alfa, entry.value);
-                    mejorPunto = entry.bestMove;
+                    if(entry.depth >= profundidad){
+                        return entry.value;
+                    } else {
+                        break;
+                    }                    
+                case TranspositionTable.alfa:
+                    //System.out.println("Cogiendo alfa haseada");
+                    if(entry.value > alfa){
+                        alfa = entry.value;
+                        mejorPunto = entry.bestMove;
+                    }                    
                     break;
-                case TranspositionTable.UPPER_BOUND:
-                    beta = Math.min(beta, entry.value);
-                    mejorPunto = entry.bestMove;
+                case TranspositionTable.beta:
+                    //System.out.println("Cogiendo beta haseada");
+                    if(entry.value < beta){
+                        beta = entry.value;
+                        mejorPunto = entry.bestMove;
+                    }
                     break;
                 default:
                     break;
@@ -128,71 +170,63 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 
         if (profundidad == 0) {
             _profExpl = nivelesExplorados;
-            return heuristica(estado, _colorPlayer, nivelesExplorados);
+            return heuristica(estado, _colorPlayer);
         }
 
         int mejorValor = INFINIT;
         
+        // Ordenar movimientos por heurística 
+        List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize())));
+        for (int i = 0; i < numMovimientosEvaluar; i++) {
+            MoveNode movimiento = movimientos.get(i);
+            Point punto = movimiento.getPoint();
 
-        for(int x = 0; x < estado.getSize(); x++){
-            for (int y = 0; y < estado.getSize(); y++){
-                // Bucle de les files
-                if (estado.getPos(x, y)==0) {
-                    HexGameStatus estatAux = new HexGameStatus(estado);
-                    Point punto = new Point(x, y);
-                    
-                    long newHash = ZobristHashing.updateHash(hash, punto, estatAux.getPos(x, y), estatAux.getCurrentPlayerColor());
-                    //System.out.println("Analizando ficha en: " + punto.x + " " + punto.y);
-                    
-                    estatAux.placeStone(punto);
-                    
-                    if (estado.isGameOver() && estado.GetWinner() == _Player) {
-                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, punto);
-                        return INFINIT;
-                    } 
-                    int valor = MAX(estatAux, profundidad-1, nivelesExplorados+1, alfa, beta, newHash);
-                    
-                    if(valor < mejorValor){
-                        mejorValor = valor;
-                        mejorPunto = punto;
-                    }
-                   
-                    beta = Math.min(mejorValor, beta);
-                    if (beta <= alfa) { // Fem poda
-                        //System.out.println("Poda en MIN, alfa: " + alfa + ", beta: " + beta);
-                        _nPodas++;
-                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.UPPER_BOUND, mejorPunto);
-                        //return mejorValor;
-                        break;
-                    }
-                    }
-                }
-            
-            if (beta <= alfa) { // Fem poda
+            HexGameStatus estadoAux = new HexGameStatus(estado);
+            long newHash = ZobristHashing.updateHash(hash, punto, estado.getPos(punto.x, punto.y), estado.getCurrentPlayerColor());
+            estadoAux.placeStone(punto);
+
+            int valor = MAX(estadoAux, profundidad - 1, nivelesExplorados + 1, alfa, beta, newHash);
+            mejorValor = Math.min(mejorValor, valor);
+
+            beta = Math.min(beta, mejorValor);
+            if (beta <= alfa) {
                 _nPodas++;
-                break;
+                transpositionTable.store(hash, profundidad, beta, TranspositionTable.beta, mejorPunto);
+                return mejorValor; // Poda
             }
         }
         
         //if (mejorPunto == null) System.out.println("GUARDANDO PUNTO NULO");
-        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, mejorPunto);
+        //transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, mejorPunto);
         //System.out.println("Guardando en tabla de transposición (MIN): hash=" + hash + ", valor=" + mejorValor);
         return mejorValor;
     }
 
     private int MAX(HexGameStatus estado, int profundidad, int nivelesExplorados, int alfa, int beta, long hash){
+        _nNodes++;
+        if (estado.isGameOver() && estado.GetWinner() == _Player) {
+            return INFINIT;
+        } 
         TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         Point mejorPunto = null;
-        if (entry != null && entry.depth >= profundidad) {
+        //if (entry != null && entry.depth >= profundidad) {
+        if (entry != null) {
             //System.out.println("Entrada encontrada en MIN para hash: " + hash + ", valor: " + entry.value);
             switch (entry.flag) {
                 case TranspositionTable.EXACT:
-                    return entry.value;
-                case TranspositionTable.LOWER_BOUND:
+                    if(entry.depth >= profundidad){
+                        return entry.value;
+                    } else {
+                        break;
+                    }
+                case TranspositionTable.alfa:
+                    //System.out.println("Cogiendo alfa haseada");
                     alfa = Math.max(alfa, entry.value);
                     mejorPunto = entry.bestMove;
                     break;
-                case TranspositionTable.UPPER_BOUND:
+                case TranspositionTable.beta:
+                    //System.out.println("Cogiendo beta haseada");
                     beta = Math.min(beta, entry.value);
                     mejorPunto = entry.bestMove;
                     break;
@@ -207,50 +241,33 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         
         if (profundidad == 0){
             _profExpl = nivelesExplorados;
-            return heuristica(estado, _colorPlayer, nivelesExplorados);
+            return heuristica(estado, _colorPlayer);
         }
         int mejorValor = MENYS_INFINIT;
-        
-        for(int x = 0; x < estado.getSize(); x++){
-            for (int y = 0; y < estado.getSize(); y++){
-                // Bucle de les files
-                if (estado.getPos(x, y)==0) {
-                    HexGameStatus estatAux = new HexGameStatus(estado);
-                    Point tirada = new Point(x, y);
-                    
-                    long newHash = ZobristHashing.updateHash(hash, tirada, estatAux.getPos(x, y), estatAux.getCurrentPlayerColor());
-                    //System.out.println("Analizando ficha en: " + tirada.x + " " + tirada.y);
-                    estatAux.placeStone(tirada);
-                    
-                    if (estado.isGameOver() && estado.GetWinner() == _Player) {
-                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, tirada);
-                        return INFINIT;
-                    }
-                    int valor = MIN(estatAux, profundidad-1, nivelesExplorados+1, alfa, beta, newHash);
-                    
-                    if(valor > mejorValor){
-                        mejorValor = valor;
-                        mejorPunto = tirada;
-                    }
-                    
-                    beta = Math.max(mejorValor, beta);
-                    if (beta <= alfa) { // Fem poda
-                        _nPodas++;
-                        //System.out.println("Poda en MIN, alfa: " + alfa + ", beta: " + beta);
-                        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.LOWER_BOUND, mejorPunto);
-                        //return mejorValor
-                        break;
-                    }
-                }
-            }
-            if (beta <= alfa) { // Fem poda
+        // Ordenar movimientos por heurística
+        List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize())));
+        for (int i = 0; i < numMovimientosEvaluar; i++) {
+            MoveNode movimiento = movimientos.get(i);
+            Point punto = movimiento.getPoint();
+
+            HexGameStatus estadoAux = new HexGameStatus(estado);
+            long newHash = ZobristHashing.updateHash(hash, punto, estado.getPos(punto.x, punto.y), estado.getCurrentPlayerColor());
+            estadoAux.placeStone(punto);
+
+            int valor = MIN(estadoAux, profundidad - 1, nivelesExplorados + 1, alfa, beta, newHash);
+            mejorValor = Math.max(mejorValor, valor);
+
+            alfa = Math.max(alfa, mejorValor);
+            if (beta <= alfa) {
                 _nPodas++;
-                break;
+                transpositionTable.store(hash, profundidad, alfa, TranspositionTable.alfa, mejorPunto);
+                return mejorValor; // Poda
             }
         }
 
         //if (mejorPunto == null) System.out.println("GUARDANDO PUNTO NULO");
-        transpositionTable.store(hash, profundidad, mejorValor, TranspositionTable.EXACT, mejorPunto);
+        //transpositionTable.store(hash, profundidad, alfa, TranspositionTable.EXACT, mejorPunto);
         //System.out.println("Guardando en tabla de transposición  (MAX): hash=" + hash + ", valor=" + mejorValor);
         return mejorValor;
     }
@@ -258,7 +275,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
     /**
     * Ordena los movimientos según la heurística actual.
     */
-   private List<MoveNode> ordenarMovimientos(HexGameStatus estado) {
+   public List<MoveNode> ordenarMovimientos(HexGameStatus estado) {
        List<MoveNode> movimientos = estado.getMoves();
 
        movimientos.sort((a, b) -> {
@@ -271,8 +288,8 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
            estadoB.placeStone(b.getPoint());
            
            // Calcular las heurísticas
-           int valorA = heuristica(estadoA, _colorPlayer, 0);
-           int valorB = heuristica(estadoB, _colorPlayer, 0);
+           int valorA = heuristica(estadoA, _colorPlayer);
+           int valorB = heuristica(estadoB, _colorPlayer);
            
            // Comparar para ordenar de mayor a menor valor heurístico
            return Integer.compare(valorB, valorA); // Ordenar de mayor a menor valor
@@ -281,22 +298,58 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
        return movimientos;
    }
 
-    public int heuristica(HexGameStatus estado, int color, int nivelesExplorados) {
+    public int heuristica(HexGameStatus estado, int color) {
         Dijkstra result = _dijkstra.shortestPathWithVirtualNodes(estado, color);
 
         int caminoPropio = result.shortestPath;
         int caminosViables = result.viablePathsCount;
         int caminoEnemigo = result.enemyShortestPath;
         int caminosViablesEnemigo = result.viableEnemyPathsCount;
-
+        /*System.out.println("Camino propio: " + caminoPropio +
+                " Camino enemigo: " + caminoEnemigo +
+                " caminos vialbles: " + caminosViables +
+                " caminos viables enemigo " + caminosViablesEnemigo);*/
         if (caminoPropio == 0) return INFINIT;   // Victoria
         if (caminoEnemigo == 0) return MENYS_INFINIT; // Derrota inminente
 
         // Ponderar la heurística considerando los caminos viables del enemigo
-        return (7 * (estado.getSize() - caminoPropio)) 
-             + (6 * caminosViables) 
-             - (5 * (estado.getSize() - caminoEnemigo))
-             - (4 * caminosViablesEnemigo);
+        return (10 * (estado.getSize() - caminoPropio)) 
+             + (3 * caminosViables) 
+             - (7 * (estado.getSize() - caminoEnemigo))
+             - (3 * caminosViablesEnemigo);
+        /*return (3*(caminoEnemigo - caminoPropio))
+                + ((caminosViables - caminosViablesEnemigo));*/
+    }
+
+    public List<MoveNode> ordenarMovimientosRapido(HexGameStatus estado) {
+        List<MoveNode> movimientos = estado.getMoves();
+
+        movimientos.sort((a, b) -> {
+            int valorA = heuristicaRapida(estado, a.getPoint());
+            int valorB = heuristicaRapida(estado, b.getPoint());
+            return Integer.compare(valorB, valorA); // Ordenar de mayor a menor
+        });
+
+        return movimientos;
+    }
+
+    public int heuristicaRapida(HexGameStatus estado, Point punto) {
+        // Aproximación rápida basada en proximidad al centro y número de vecinos libres
+        int distanciaCentro = Math.abs(punto.x - estado.getSize() / 2) + Math.abs(punto.y - estado.getSize() / 2);
+        //int puntuacionVecinos = (int) estado.getNeigh(punto).stream().filter(p -> estado.getPos(p.x, p.y) == 0).count();
+        // Evaluar vecinos
+        int puntuacionVecinos = 0;
+        for (Point vecino : estado.getNeigh(punto)) {
+            int estadoVecino = estado.getPos(vecino.x, vecino.y);
+            if (estadoVecino == 0) { // Vecino vacío
+                puntuacionVecinos += 1;
+            } else if (estadoVecino == _colorPlayer) { // Vecino nuestro
+                puntuacionVecinos += 2;
+            } else { // Vecino del enemigo
+                puntuacionVecinos -= 1;
+            }
+        }
+        return -distanciaCentro + puntuacionVecinos;
     }
 
 
@@ -311,9 +364,9 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
 }
 
 class TranspositionTable {
-    static final int EXACT = 0;       // Valor exacto
-    static final int LOWER_BOUND = 1; // Cota inferior
-    static final int UPPER_BOUND = 2; // Cota superior 
+    static final int EXACT = 0; // Valor exacto
+    static final int alfa = 1; // Cota inferior
+    static final int beta = 2; // Cota superior 
     
     private HashMap<Long, TableEntry> table = new HashMap<>();
 
