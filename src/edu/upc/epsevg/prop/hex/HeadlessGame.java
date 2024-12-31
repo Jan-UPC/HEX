@@ -28,17 +28,17 @@ public class HeadlessGame {
     private int size;
     
     public static void main(String[] args) {
-        final int midaTauler = 4;
+        final int midaTauler = 8;
         final int seg = 30;
         //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 5, midaTauler);
         IPlayer player1 = new PlayerIDHexCalculators("IDSHexCalculator", midaTauler, seg);
-        IPlayer player2 = new RandomPlayer("Random");
-        //IPlayer player2 = new H_E_X_Player(2/*GB*/);
+        //IPlayer player2 = new RandomPlayer("Random");
+        IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
         HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, seg/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("IDS vs Random tablero 4");
+        System.out.println("IDS con tablero 8 (contador de repetidas a 2)");
     }
 
     //=====================================================================================0

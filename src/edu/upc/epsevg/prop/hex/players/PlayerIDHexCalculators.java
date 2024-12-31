@@ -35,6 +35,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
     private long timeoutLimit; // Temps límit calculat per al timeout
     private boolean timeoutTriggered; // Indicador si el timeout ha estat activat
     private TranspositionTable transpositionTable; // Taula de transposició per millorar la cerca
+    private int profundidadMaxima; // Guardem la profunditat maxima arribada
 
     /**
      * Constructor per inicialitzar el jugador amb un nom, mida de tauler i límit de temps.
@@ -60,6 +61,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         this._profTotal = 0; 
         this._timeout = timeout*1000;
         this._nMoves = 0;
+        this.profundidadMaxima = 0;
         this._dijkstra = new Dijkstra();
         this.transpositionTable = new TranspositionTable();
         HexGameStatus s = new HexGameStatus(boardSize);
@@ -99,6 +101,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
             System.out.println("Numero total de movimientos: " + _nMoves);
             System.out.println("Tiempo total del juego en ms: " + _totalTime);
             System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);
+            System.out.println("Profundidad maxima llegada: " + profundidadMaxima);
 
             // Reinicialitzar si es detecta un nou joc
             init(_name, s.getSize(), _timeout/1000);
@@ -108,9 +111,6 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         // Iterative Deepening
         int contadorRepetidas = 0; // Contador de elecciones iguales consecutivas
         for (_profActual = 1; !timeoutTriggered; _profActual++) {
-            /*if(_profActual > 5){
-                break;
-            }*/
             try {
                 // Realitzar la cerca amb la profunditat actual
                 Point movimientoActual = realizarBusqueda(s, hash, _profActual);
@@ -119,7 +119,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                 } else {
                     contadorRepetidas = 0;
                 }
-                if(contadorRepetidas==2){
+                if(contadorRepetidas==1){
                     timeoutTriggered = true;
                 }
                 mejorMovimiento = movimientoActual; // Actualitzar el millor moviment trobat
@@ -128,7 +128,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                 break;
             }
         }
-        
+        profundidadMaxima = Math.max(profundidadMaxima, _profActual-1);
         // Actualitzar les estadístiques de profunditat
         _profTotal += _profActual-1;
         long finalTime = System.currentTimeMillis();
