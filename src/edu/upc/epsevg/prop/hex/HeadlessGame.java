@@ -35,10 +35,10 @@ public class HeadlessGame {
         //IPlayer player1 = new PlayerIDHexCalculators("IDS", midaTauler);
         IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
-        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 1/*games*/);
+        HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("Ordenando movimientos iniciales con OrdenacionRapida + HeurisitcaRapida Actualizada + Heuristica Actualizada");
+        System.out.println("Min-Max Tablero 7 (optimizado)");
 
     }
 

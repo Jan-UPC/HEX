@@ -77,14 +77,15 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
     private Point realizarBusqueda(HexGameStatus s, long hash, int profundidad) throws TimeoutException {
         List<MoveNode> movimientos = null;
-        if(_nMoves < 3){
+        if(_nMoves < 2){
             movimientos = ordenarMovimientosRapido(s);
         } else {
             movimientos = ordenarMovimientos(s);
         }
         Point mejorMovimiento = movimientos.get(0).getPoint();
         int mejorValor = MENYS_INFINIT;
-        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/s.getSize())));
+        //int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/s.getSize())));
+        int numMovimientosEvaluar = s.getSize();
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             MoveNode movimiento = movimientos.get(i); 
             if (System.currentTimeMillis() >= timeoutLimit) {
@@ -163,7 +164,8 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         int mejorValor = INFINIT;
         // Ordenar movimientos por heurística 
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize()))); // Solo los 20 mejores
+        //int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize()))); // Solo los 20 mejores
+        int numMovimientosEvaluar = estado.getSize();
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             MoveNode movimiento = movimientos.get(i);
             Point punto = movimiento.getPoint();
@@ -234,7 +236,8 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         int mejorValor = MENYS_INFINIT;
         // Ordenar movimientos por heurística
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize()))); // Solo los 20 mejores
+        //int numMovimientosEvaluar = Math.min(movimientos.size(), Math.max(20, (150/estado.getSize()))); // Solo los 20 mejores
+        int numMovimientosEvaluar = estado.getSize();
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             MoveNode movimiento = movimientos.get(i);
             Point punto = movimiento.getPoint();

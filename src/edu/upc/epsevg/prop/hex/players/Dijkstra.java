@@ -73,6 +73,39 @@ public class Dijkstra {
             visitado[pActual.x][pActual.y] = true;
 
             ArrayList<Point> vecinos = estat.getNeigh(pActual);
+            // Direcciones: {deltaX1, deltaY1, deltaX2, deltaY2, deltaX3, deltaY3}
+            int[][] direcciones = {
+                {0, -1, 1, -1, 1, -2}, // Arriba
+                {-1, 0, 0, -1, -1, -1}, // Arriba-Izquierda            
+                {-1, 1, -1, 0, -2, 1}, // Abajo-Izquierda             
+                {0, 1, -1, 1, -1, 2},  // Abajo
+                {1, 0, 0, 1, 1, 1},    // Abajo-Derecha
+                {1, -1, 1, 0, 2, -1}  // Arriba-Derecha
+            };
+
+            // Comprobar las seis casillas para cada dirección
+            for (int[] dir : direcciones) {
+                int interX1 = pActual.x + dir[0];
+                int interY1 = pActual.y + dir[1];
+                int interX2 = pActual.x + dir[2];
+                int interY2 = pActual.y + dir[3];
+                int finalX = pActual.x + dir[4];
+                int finalY = pActual.y + dir[5];
+
+                // Verificar si las coordenadas están dentro del tablero
+                if (interX1 >= 0 && interX1 < midaTauler && interY1 >= 0 && interY1 < midaTauler &&
+                    interX2 >= 0 && interX2 < midaTauler && interY2 >= 0 && interY2 < midaTauler &&
+                    finalX >= 0 && finalX < midaTauler && finalY >= 0 && finalY < midaTauler) {
+
+                    // Comprobar las condiciones de las casillas
+                    if (estat.getPos(interX1, interY1) == 0 && estat.getPos(interX2, interY2) == 0 &&
+                        estat.getPos(finalX, finalY) == color) {
+                        // Añadir la casilla final como vecino directo
+                        vecinos.add(new Point(finalX, finalY));
+                    }
+                }
+            }
+
             for (Point vecino : vecinos) {
                 int indexActual = pActual.x * midaTauler + pActual.y;
                 int indexVecino = vecino.x * midaTauler + vecino.y;
@@ -101,6 +134,37 @@ public class Dijkstra {
         while (!cuaEnemigo.isEmpty()) {
             Point pActual = cuaEnemigo.poll();
             ArrayList<Point> vecinos = estat.getNeigh(pActual);
+            int[][] direcciones = {
+                {0, -1, 1, -1, 1, -2}, // Arriba
+                {-1, 0, 0, -1, -1, -1}, // Arriba-Izquierda            
+                {-1, 1, -1, 0, -2, 1}, // Abajo-Izquierda             
+                {0, 1, -1, 1, -1, 2},  // Abajo
+                {1, 0, 0, 1, 1, 1},    // Abajo-Derecha
+                {1, -1, 1, 0, 2, -1}  // Arriba-Derecha
+            };
+
+            // Comprobar las seis casillas para cada dirección
+            for (int[] dir : direcciones) {
+                int interX1 = pActual.x + dir[0];
+                int interY1 = pActual.y + dir[1];
+                int interX2 = pActual.x + dir[2];
+                int interY2 = pActual.y + dir[3];
+                int finalX = pActual.x + dir[4];
+                int finalY = pActual.y + dir[5];
+
+                // Verificar si las coordenadas están dentro del tablero
+                if (interX1 >= 0 && interX1 < midaTauler && interY1 >= 0 && interY1 < midaTauler &&
+                    interX2 >= 0 && interX2 < midaTauler && interY2 >= 0 && interY2 < midaTauler &&
+                    finalX >= 0 && finalX < midaTauler && finalY >= 0 && finalY < midaTauler) {
+
+                    // Comprobar las condiciones de las casillas
+                    if (estat.getPos(interX1, interY1) == 0 && estat.getPos(interX2, interY2) == 0 &&
+                        estat.getPos(finalX, finalY) == -color) {
+                        // Añadir la casilla final como vecino directo
+                        vecinos.add(new Point(finalX, finalY));
+                    }
+                }
+            }
             for (Point vecino : vecinos) {
                 int indexActual = pActual.x * midaTauler + pActual.y;
                 int indexVecino = vecino.x * midaTauler + vecino.y;
@@ -127,12 +191,44 @@ public class Dijkstra {
         // Contar caminos viables
         viablePathsCount = 0;
         viableEnemyPathsCount = 0;
-        for (int i = 0; i < midaTauler * midaTauler; i++) {
-            if (distancias[i] <= shortestPath) {
-                viablePathsCount++;
+        if (color == 1) {
+        // Casillas finales para el jugador 1 (última fila)
+            for (int fila = 0; fila < midaTauler; fila++) {
+                //int index = fila * midaTauler + (midaTauler - 1); // Última fila
+                int index = (midaTauler - 1) * midaTauler + fila;
+                if (distancias[index] <= shortestPath) {
+                    viablePathsCount++;
+                }
             }
-            if (distanciasEnemigo[i] <= enemyShortestPath) {
-                viableEnemyPathsCount++;
+        } else if (color == -1) {
+            // Casillas finales para el jugador -1 (última columna)
+            for (int columna = 0; columna < midaTauler; columna++) {
+                //int index = (midaTauler - 1) * midaTauler + columna; // Última columna
+                int index = columna * midaTauler + (midaTauler - 1);
+                if (distancias[index] <= shortestPath) {
+                    viablePathsCount++;
+                }
+            }
+        }
+
+        // Repetir para el enemigo (-color)
+        if (-color == 1) {
+            // Casillas finales para el enemigo hacia la derecha
+            for (int fila = 0; fila < midaTauler; fila++) {
+                //int index = fila * midaTauler + (midaTauler - 1); // Última fila
+                int index = (midaTauler - 1) * midaTauler + fila;
+                if (distanciasEnemigo[index] <= enemyShortestPath) {
+                    viableEnemyPathsCount++;
+                }
+            }
+        } else if (-color == -1) {
+            // Casillas finales para el enemigo hacia abajo
+            for (int columna = 0; columna < midaTauler; columna++) {
+                //int index = (midaTauler - 1) * midaTauler + columna; // Última columna
+                int index = columna * midaTauler + (midaTauler - 1);
+                if (distanciasEnemigo[index] <= enemyShortestPath) {
+                    viableEnemyPathsCount++;
+                }
             }
         }
 
