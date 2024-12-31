@@ -56,7 +56,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
      * @param timeout   El límit de temps (en segons).
      */
     private void init(String name, int boardSize, int timeout) {
-        System.out.println("==========================================");
+        //System.out.println("==========================================");
         this._name = name;
         this._profTotal = 0; 
         this._timeout = timeout*1000;
@@ -95,13 +95,13 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         // Calcular el hash inicial per l'estat actual del tauler
         long hash = ZobristHashing.calculateHash(s);
         if(_hashTableroVacio==hash && _nMoves!=1){
-            System.out.println("======== IDS =========");
+            /*System.out.println("======== IDS =========");
             double estadistica = (double)_profTotal/_nMoves;
             System.out.println("Profundidad conseguida con exito: " + _profTotal);
             System.out.println("Numero total de movimientos: " + _nMoves);
             System.out.println("Tiempo total del juego en ms: " + _totalTime);
             System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);
-            System.out.println("Profundidad maxima llegada: " + profundidadMaxima);
+            System.out.println("Profundidad maxima llegada: " + profundidadMaxima);*/
 
             // Reinicialitzar si es detecta un nou joc
             init(_name, s.getSize(), _timeout/1000);
