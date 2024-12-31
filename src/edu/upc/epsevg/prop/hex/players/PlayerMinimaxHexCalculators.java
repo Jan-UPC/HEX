@@ -91,7 +91,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
     * @param boardSize Mida del tauler.
     */
     private void init(String name, int profunditatMaxima, int boardSize){
-        System.out.println("==========================================");
+        //System.out.println("==========================================");
         // Assignació del nom del jugador
         this._name = name;
 
@@ -142,10 +142,10 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         
         // Comprova si el tauler ha estat reiniciat (nova partida)
         if(_hashTableroVacio==hash && _nMoves!=1){
-            double estadistica = (double)_totalTime/_nMoves;
+            /*double estadistica = (double)_totalTime/_nMoves;
             System.out.println("Tiempo total del juego en ms: " + _totalTime);
             System.out.println("Numero total de movimientos: " + _nMoves);
-            System.out.println("Estadistica ms/moves: " + estadistica);
+            System.out.println("Estadistica ms/moves: " + estadistica);*/
             init(_name, _profMax, s.getSize());
             _nMoves++;
         }
@@ -181,6 +181,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                 long realTime = finalTime - initialTime;
                 _totalTime += realTime;
                 /*double estadistica = (double)_totalTime/_nMoves;
+                System.out.println("======== Min-Max =========");
                 System.out.println("Tiempo total del movimiento en ms: " + realTime);
                 System.out.println("Tiempo total del juego en ms: " + _totalTime);
                 System.out.println("Numero total de movimientos: " + _nMoves);
@@ -202,10 +203,11 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         long realTime = finalTime - initialTime;
         _totalTime += realTime;
         /*double estadistica = (double)_totalTime/_nMoves;
-        System.out.println("Tiempo total del movimiento en ms: " + realTime);
-        System.out.println("Tiempo total del juego en ms: " + _totalTime);
-        System.out.println("Numero total de movimientos: " + _nMoves);
-        System.out.println("Estadistica ms/moves: " + estadistica);*/
+                System.out.println("======== Min-Max =========");
+                System.out.println("Tiempo total del movimiento en ms: " + realTime);
+                System.out.println("Tiempo total del juego en ms: " + _totalTime);
+                System.out.println("Numero total de movimientos: " + _nMoves);
+                System.out.println("Estadistica ms/moves: " + estadistica);*/
         return new PlayerMove(mejorMovimiento, _nNodes, _profExpl, SearchType.MINIMAX);
     }
 

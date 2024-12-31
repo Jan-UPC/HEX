@@ -29,16 +29,16 @@ public class HeadlessGame {
     
     public static void main(String[] args) {
         final int midaTauler = 4;
-        final int seg = 20;
-        //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 6, midaTauler);
+        final int seg = 30;
+        //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 5, midaTauler);
         IPlayer player1 = new PlayerIDHexCalculators("IDSHexCalculator", midaTauler, seg);
-        //IPlayer player2 = new RandomPlayer("Random");
-        IPlayer player2 = new H_E_X_Player(2/*GB*/);
+        IPlayer player2 = new RandomPlayer("Random");
+        //IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
         HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, seg/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("IDS tablero 6 con 20s");
+        System.out.println("IDS vs Random tablero 4");
     }
 
     //=====================================================================================0

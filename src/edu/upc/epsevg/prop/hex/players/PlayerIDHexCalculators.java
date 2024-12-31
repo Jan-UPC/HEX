@@ -29,6 +29,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
     private int _nMoves; // Nombre de moviments realitzats
     private int _timeout; // Temps límit per al timeout
     private long _hashTableroVacio; // Hash del tauler buit
+    private int _totalTime; //Temps total acumulat en mil·lisegons per a calcular tots els moviments realitzats pel jugador.
     private int _nNodes; // Nombre de nodes explorats en la cerca actual
     private Dijkstra _dijkstra; // Instància del càlcul de camins més curts
     private long timeoutLimit; // Temps límit calculat per al timeout
@@ -83,6 +84,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         _colorPlayer = s.getCurrentPlayerColor();
 
         // Configurar timeout
+        long initialTime = System.currentTimeMillis();
         timeoutTriggered = false;
         timeoutLimit = System.currentTimeMillis() + _timeout; 
 
@@ -91,6 +93,13 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         // Calcular el hash inicial per l'estat actual del tauler
         long hash = ZobristHashing.calculateHash(s);
         if(_hashTableroVacio==hash && _nMoves!=1){
+            System.out.println("======== IDS =========");
+            double estadistica = (double)_profTotal/_nMoves;
+            System.out.println("Profundidad conseguida con exito: " + _profTotal);
+            System.out.println("Numero total de movimientos: " + _nMoves);
+            System.out.println("Tiempo total del juego en ms: " + _totalTime);
+            System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);
+
             // Reinicialitzar si es detecta un nou joc
             init(_name, s.getSize(), _timeout/1000);
             _nMoves++;
@@ -99,6 +108,9 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         // Iterative Deepening
         int contadorRepetidas = 0; // Contador de elecciones iguales consecutivas
         for (_profActual = 1; !timeoutTriggered; _profActual++) {
+            /*if(_profActual > 5){
+                break;
+            }*/
             try {
                 // Realitzar la cerca amb la profunditat actual
                 Point movimientoActual = realizarBusqueda(s, hash, _profActual);
@@ -111,7 +123,6 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                     timeoutTriggered = true;
                 }
                 mejorMovimiento = movimientoActual; // Actualitzar el millor moviment trobat
-                System.out.println("DEPTH = " + _profActual);
             } catch (TimeoutException e) {
                 // Timeout detectat
                 break;
@@ -120,11 +131,15 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         
         // Actualitzar les estadístiques de profunditat
         _profTotal += _profActual-1;
-        double estadistica = (double)_profTotal/_nMoves;
-        System.out.println("Profundidad conseguida con exito: " + _profTotal);
-        System.out.println("Numero total de movimientos: " + _nMoves);
-        System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);
-        
+        long finalTime = System.currentTimeMillis();
+        long realTime = finalTime - initialTime;
+        _totalTime += realTime;     
+        /*double estadistica = (double)_profTotal/_nMoves;
+            System.out.println("======== IDS =========");
+            System.out.println("Profundidad conseguida con exito: " + _profTotal);
+            System.out.println("Numero total de movimientos: " + _nMoves);
+            System.out.println("Tiempo total del juego en ms: " + _totalTime);
+            System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);*/
         // Retornar el millor moviment trobat
         return new PlayerMove(mejorMovimiento, _nNodes, _profActual, SearchType.MINIMAX_IDS);
     }
