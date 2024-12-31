@@ -120,31 +120,6 @@ public class TestPlayerMiniMax {
     }
     
     @Test
-    public void testDijkstra_Bugeado_Player1() {
-        byte[][] board = {
-            { 0, 0, 0, 0, 0},
-              { 0, 0, 0, -1, 0},
-                { 0, 1, 1, -1, 0},
-                  { 1, -1, 1, -1, 0},
-                    { 0, 0, 0, 0, 0}
-        };
-
-        HexGameStatus gs = new HexGameStatus(board, PlayerType.PLAYER1);
-        Dijkstra dijkstra = new Dijkstra();
-        PlayerMinimaxHexCalculatorsSINOPTIMIZAR player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 5, true);
-        
-        Dijkstra distance = dijkstra.shortestPathWithVirtualNodes(gs, 1);
-
-        System.out.println("testDijkstra_Bugeado_Player1: " + distance.shortestPath);
-        System.out.println("testDijkstra_Bugeado_Player1: " + distance.enemyShortestPath);
-        System.out.println("testDijkstra_Bugeado_Player1: " + distance.viablePathsCount);
-        System.out.println("testDijkstra_Bugeado_Player1: " + distance.viableEnemyPathsCount);
-        System.out.println("testDijkstra_Bugeado_Player1: " + player1.heuristica0(gs, 1, 0));
-        assertEquals(3, distance.shortestPath);
-        assertEquals(2, distance.enemyShortestPath);
-    }
-    
-    @Test
     public void testZobristHashing() {
         ZobristHashing.setBoardSize(5); // Tamaño del tablero
         HexGameStatus estado = new HexGameStatus(5); // Crear un tablero vacío

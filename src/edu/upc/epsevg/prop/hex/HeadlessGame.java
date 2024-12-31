@@ -6,7 +6,6 @@ import edu.upc.epsevg.prop.hex.players.H_E_X_Player;
 import edu.upc.epsevg.prop.hex.players.HumanPlayer;
 import edu.upc.epsevg.prop.hex.players.PlayerIDHexCalculators;
 import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculators;
-import edu.upc.epsevg.prop.hex.players.PlayerMinimaxHexCalculatorsSINOPTIMIZAR;
 import edu.upc.epsevg.prop.hex.players.RandomPlayer;
 import java.lang.ref.WeakReference;
 
@@ -29,17 +28,15 @@ public class HeadlessGame {
     private int size;
     
     public static void main(String[] args) {
-        final int midaTauler = 7;
-        IPlayer player1 = new PlayerMinimaxHexCalculators("HexCalculator", 7, midaTauler);
-        //IPlayer player1 = new PlayerMinimaxHexCalculatorsSINOPTIMIZAR("MiniMax", 4, true);
-        //IPlayer player1 = new PlayerIDHexCalculators("IDS", midaTauler);
+        final int midaTauler = 9;
+        IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 5, midaTauler);
+        //IPlayer player1 = new PlayerIDHexCalculators("IDSHexCalculator", midaTauler);
         IPlayer player2 = new H_E_X_Player(2/*GB*/);
         
         HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("Min-Max Tablero 7 (optimizado)");
-
+        System.out.println("Min-Max Tablero 9");
     }
 
     //=====================================================================================0

@@ -60,10 +60,10 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         long hash = ZobristHashing.calculateHash(s);
         // Comprobamos que no hayamos empezado otra partida para reiniciar todos los valores
         if(_hashTableroVacio==hash && _nMoves!=1){
-            /*double estadistica = (_totalTime)/_nMoves;
+            double estadistica = (double)_totalTime/_nMoves;
             System.out.println("Tiempo total del juego en ms: " + _totalTime);
             System.out.println("Numero total de movimientos: " + _nMoves);
-            System.out.println("Estadistica ms/moves: " + estadistica);*/
+            System.out.println("Estadistica ms/moves: " + estadistica);
             init(_name, _profMax, s.getSize());
             _nMoves++;
         }
@@ -94,7 +94,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                 long finalTime = System.currentTimeMillis();
                 long realTime = finalTime - initialTime;
                 _totalTime += realTime;
-                /*double estadistica = (_totalTime)/_nMoves;
+                /*double estadistica = (double)_totalTime/_nMoves;
                 System.out.println("Tiempo total del movimiento en ms: " + realTime);
                 System.out.println("Tiempo total del juego en ms: " + _totalTime);
                 System.out.println("Numero total de movimientos: " + _nMoves);
@@ -114,7 +114,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         long finalTime = System.currentTimeMillis();
         long realTime = finalTime - initialTime;
         _totalTime += realTime;
-        /*double estadistica = (_totalTime)/_nMoves;
+        /*double estadistica = (double)_totalTime/_nMoves;
         System.out.println("Tiempo total del movimiento en ms: " + realTime);
         System.out.println("Tiempo total del juego en ms: " + _totalTime);
         System.out.println("Numero total de movimientos: " + _nMoves);
@@ -122,13 +122,11 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         return new PlayerMove(mejorMovimiento, _nNodes, _profExpl, SearchType.MINIMAX);
     }
 
-    //private int MIN(HexGameStatus estado, int profundidad, int alfa, int beta, int hash) {
     private int MIN(HexGameStatus estado, int profundidad, int nivelesExplorados,int alfa, int beta, long hash) {  
         _nNodes++;
         if (estado.isGameOver() && estado.GetWinner() == _Player) {
             return INFINIT;
         }
-        
         TranspositionTable.TableEntry entry = transpositionTable.lookup(hash);
         Point mejorPunto = null;
         if (entry != null) {
@@ -187,7 +185,6 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
                 return mejorValor; // Poda
             }
         }
-
         return mejorValor;
     }
 
