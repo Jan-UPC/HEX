@@ -28,7 +28,7 @@ public class HeadlessGame {
     private int size;
     
     public static void main(String[] args) {
-        final int midaTauler = 9;
+        final int midaTauler = 5;
         IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 5, midaTauler);
         //IPlayer player1 = new PlayerIDHexCalculators("IDSHexCalculator", midaTauler);
         IPlayer player2 = new H_E_X_Player(2/*GB*/);
@@ -36,7 +36,7 @@ public class HeadlessGame {
         HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, 13/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("Min-Max Tablero 9");
+        System.out.println("Min-Max Tablero 5");
     }
 
     //=====================================================================================0

@@ -167,7 +167,8 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         int mejorValor = INFINIT;
         // Ordenar movimientos por heurística 
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+        //int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+        int numMovimientosEvaluar = movimientos.size();
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             MoveNode movimiento = movimientos.get(i);
             Point punto = movimiento.getPoint();
@@ -231,7 +232,8 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         int mejorValor = MENYS_INFINIT;
         // Ordenar movimientos por heurística
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+        //int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+        int numMovimientosEvaluar = movimientos.size();
         for (int i = 0; i < numMovimientosEvaluar; i++) {
             MoveNode movimiento = movimientos.get(i);
             Point punto = movimiento.getPoint();
@@ -285,10 +287,11 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         if (caminoEnemigo == 0) return MENYS_INFINIT; // Derrota 
 
         // Ponderar la heurística considerando los caminos viables del enemigo
-        return (10 * (estado.getSize() - caminoPropio)) 
-             + (3 * caminosViables) 
+        /*return (10 * (estado.getSize() - caminoPropio)) 
+             + (5 * caminosViables) 
              - (7 * (estado.getSize() - caminoEnemigo))
-             - (3 * caminosViablesEnemigo);
+             - (3 * caminosViablesEnemigo);*/
+        return 3*(caminoEnemigo - caminoPropio) + (caminosViables - caminosViablesEnemigo);
     }
 
     public List<MoveNode> ordenarMovimientosRapido(HexGameStatus estado) {
