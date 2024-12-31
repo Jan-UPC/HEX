@@ -28,7 +28,7 @@ public class HeadlessGame {
     private int size;
     
     public static void main(String[] args) {
-        final int midaTauler = 8;
+        final int midaTauler = 7;
         final int seg = 30;
         //IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 5, midaTauler);
         IPlayer player1 = new PlayerIDHexCalculators("IDSHexCalculator", midaTauler, seg);
@@ -38,7 +38,7 @@ public class HeadlessGame {
         HeadlessGame game = new HeadlessGame(player1, player2, midaTauler, seg/*s timeout*/, 10/*games*/);
         GameResult gr = game.start();
         System.out.println(gr);
-        System.out.println("IDS con tablero 8 (contador de repetidas a 2)");
+        System.out.println("IDS con tablero 7");
     }
 
     //=====================================================================================0
