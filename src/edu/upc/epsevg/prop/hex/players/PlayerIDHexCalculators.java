@@ -119,7 +119,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                 } else {
                     contadorRepetidas = 0;
                 }
-                if(contadorRepetidas==1){
+                if(contadorRepetidas==2){
                     timeoutTriggered = true;
                 }
                 mejorMovimiento = movimientoActual; // Actualitzar el millor moviment trobat
