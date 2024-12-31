@@ -78,6 +78,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         // Incrementar el nombre de moviments i reiniciar els nodes explorats
         _nMoves++;
         _nNodes = 0;
+        _profActual = 1;
         _Player = s.getCurrentPlayer();
         _colorPlayer = s.getCurrentPlayerColor();
 
@@ -96,12 +97,21 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         }
 
         // Iterative Deepening
+        int contadorRepetidas = 0; // Contador de elecciones iguales consecutivas
         for (_profActual = 1; !timeoutTriggered; _profActual++) {
             try {
                 // Realitzar la cerca amb la profunditat actual
                 Point movimientoActual = realizarBusqueda(s, hash, _profActual);
+                if(movimientoActual.equals(mejorMovimiento)){
+                    contadorRepetidas++;
+                } else {
+                    contadorRepetidas = 0;
+                }
+                if(contadorRepetidas==2){
+                    timeoutTriggered = true;
+                }
                 mejorMovimiento = movimientoActual; // Actualitzar el millor moviment trobat
-                //Depth = depth;
+                System.out.println("DEPTH = " + _profActual);
             } catch (TimeoutException e) {
                 // Timeout detectat
                 break;
@@ -142,8 +152,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
        int mejorValor = MENYS_INFINIT;
 
        // Limitar el nombre de moviments a avaluar
-       int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual)/2);
-       //int numMovimientosEvaluar = movimientos.size();
+       int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual));
 
        // Avaluar cada moviment seleccionat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -177,6 +186,9 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
                mejorValor = valor;
                mejorMovimiento = punto;
            }
+           /*if(mejorValor == INFINIT){
+               timeoutTriggered = true;
+           }*/
        }
 
        // Retornar el millor moviment trobat fins al moment
@@ -215,11 +227,6 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
        Point mejorPunto = null;
        if (entry != null) {
            switch (entry.flag) {
-               case TranspositionTable.EXACT:
-                   if (entry.depth >= profundidad) {
-                       return entry.value; // Retorna el valor si ja està calculat
-                   }
-                   break;
                case TranspositionTable.alfa:
                    if (entry.value > alfa) {
                        alfa = entry.value;
@@ -251,7 +258,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
        // Ordenar moviments basant-se en una heurística
        List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-       int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual));
+       int numMovimientosEvaluar = Math.min(movimientos.size(), 200/_profActual);
 
        // Explorar cada moviment ordenat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -310,11 +317,6 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         Point mejorPunto = null;
         if (entry != null) {
             switch (entry.flag) {
-                case TranspositionTable.EXACT:
-                    if (entry.depth >= profundidad) {
-                        return entry.value; // Retorna el valor si ja està calculat
-                    }
-                    break;
                 case TranspositionTable.alfa:
                     alfa = Math.max(alfa, entry.value);
                     mejorPunto = entry.bestMove;
@@ -342,7 +344,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
         // Ordenar moviments basant-se en una heurística
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual));
+        int numMovimientosEvaluar = Math.min(movimientos.size(), 200/_profActual);
 
         // Explorar cada moviment ordenat
         for (int i = 0; i < numMovimientosEvaluar; i++) {
