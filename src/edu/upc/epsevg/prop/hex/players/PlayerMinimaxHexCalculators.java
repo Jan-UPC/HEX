@@ -159,7 +159,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         }
         
         // Determina el número màxim de moviments a avaluar
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), 20);
         Point mejorMovimiento = movimientos.get(movimientos.size()/2).getPoint();
         int mejorValor = MENYS_INFINIT;
         int profExpl = 0;
@@ -270,7 +270,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         // Ordena els moviments per heurística ràpida 
         List<MoveNode> movimientos;
         movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 30); // Limita el nombre de moviments a avaluar
+        int numMovimientosEvaluar = Math.min(movimientos.size(), 20); // Limita el nombre de moviments a avaluar
         
         // Itera pels moviments seleccionats
         for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -355,7 +355,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         // Ordenar moviments per heurística ràpida
         List<MoveNode> movimientos;
         movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 30); // Limita el nombre de moviments a avaluar
+        int numMovimientosEvaluar = Math.min(movimientos.size(), 20); // Limita el nombre de moviments a avaluar
         
         // Itera pels moviments seleccionats
         for (int i = 0; i < numMovimientosEvaluar; i++) {
