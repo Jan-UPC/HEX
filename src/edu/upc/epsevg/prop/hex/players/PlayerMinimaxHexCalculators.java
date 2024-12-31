@@ -159,7 +159,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         }
         
         // Determina el número màxim de moviments a avaluar
-        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/_profMax)/2);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/_profMax));
         Point mejorMovimiento = movimientos.get(movimientos.size()/2).getPoint();
         int mejorValor = MENYS_INFINIT;
         int profExpl = 0;

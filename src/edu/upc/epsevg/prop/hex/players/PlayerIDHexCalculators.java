@@ -25,6 +25,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
     private PlayerType _Player; // Tipus de jugador actual (PLAYER1 o PLAYER2)
     private int _colorPlayer; // Color del jugador 
     private int _profTotal; // Profunditat total explorada
+    private int _profActual; //Profunditat actual
     private int _nMoves; // Nombre de moviments realitzats
     private int _timeout; // Temps límit per al timeout
     private long _hashTableroVacio; // Hash del tauler buit
@@ -95,31 +96,27 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         }
 
         // Iterative Deepening
-        
-        // Variable per emmagatzemar la profunditat aconseguida
-        int Depth = 0;
-        for (int depth = 1; !timeoutTriggered; depth++) {
+        for (_profActual = 1; !timeoutTriggered; _profActual++) {
             try {
                 // Realitzar la cerca amb la profunditat actual
-                Point movimientoActual = realizarBusqueda(s, hash, depth);
+                Point movimientoActual = realizarBusqueda(s, hash, _profActual);
                 mejorMovimiento = movimientoActual; // Actualitzar el millor moviment trobat
                 //Depth = depth;
             } catch (TimeoutException e) {
                 // Timeout detectat
-                Depth = depth-1;
                 break;
             }
         }
         
         // Actualitzar les estadístiques de profunditat
-        _profTotal += Depth;
+        _profTotal += _profActual-1;
         double estadistica = (double)_profTotal/_nMoves;
         System.out.println("Profundidad conseguida con exito: " + _profTotal);
         System.out.println("Numero total de movimientos: " + _nMoves);
         System.out.println("Estadistica ProfundidadTotal/Moves: " + estadistica);
         
         // Retornar el millor moviment trobat
-        return new PlayerMove(mejorMovimiento, _nNodes, Depth, SearchType.MINIMAX_IDS);
+        return new PlayerMove(mejorMovimiento, _nNodes, _profActual, SearchType.MINIMAX_IDS);
     }
 
     /**
@@ -145,7 +142,8 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
        int mejorValor = MENYS_INFINIT;
 
        // Limitar el nombre de moviments a avaluar
-       int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad)/2);
+       int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual)/2);
+       //int numMovimientosEvaluar = movimientos.size();
 
        // Avaluar cada moviment seleccionat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -253,7 +251,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
        // Ordenar moviments basant-se en una heurística
        List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-       int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad));
+       int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual));
 
        // Explorar cada moviment ordenat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -344,7 +342,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
         // Ordenar moviments basant-se en una heurística
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad));
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (200/_profActual));
 
         // Explorar cada moviment ordenat
         for (int i = 0; i < numMovimientosEvaluar; i++) {
