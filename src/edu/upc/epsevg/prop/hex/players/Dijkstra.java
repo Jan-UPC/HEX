@@ -5,12 +5,24 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
+/**
+ * Classe que implementa el càlcul de camins mínims i altres mètriques associades
+ * utilitzant l'algorisme de Dijkstra.
+ */
 public class Dijkstra {
     public int shortestPath;         // Camino más corto
     public int viablePathsCount;     // Número de caminos viables cercanos al óptimo
     public int viableEnemyPathsCount; // Número de caminos viables cercanos al óptimo del enemigo
     public int enemyShortestPath;    // Camino más corto del enemigo
 
+    /**
+     * Constructor amb paràmetres.
+     *
+     * @param shortestPath Distància del camí més curt del jugador actual.
+     * @param viablePathsCount Nombre de camins viables propers al camí més curt del jugador.
+     * @param viableEnemyPathsCount Nombre de camins viables propers al camí més curt de l'enemic.
+     * @param enemyShortestPath Distància del camí més curt de l'enemic.
+     */
     public Dijkstra(int shortestPath, int viablePathsCount, int viableEnemyPathsCount,  int enemyShortestPath) {
         this.shortestPath = shortestPath;
         this.viablePathsCount = viablePathsCount;
@@ -18,6 +30,11 @@ public class Dijkstra {
         this.viableEnemyPathsCount = viableEnemyPathsCount;
     }
 
+    /**
+     * Constructor per defecte.
+     * Inicialitza els valors per defecte, establint les distàncies com a màximes
+     * i els comptadors de camins viables a zero.
+     */
     public Dijkstra() {
         this.shortestPath = Integer.MAX_VALUE;
         this.viablePathsCount = 0;
@@ -25,6 +42,15 @@ public class Dijkstra {
         this.enemyShortestPath = Integer.MAX_VALUE;
     }
 
+    /**
+    * Calcula el camí més curt i altres mètriques utilitzant nodes virtuals per simular 
+    * les vores del tauler. Aquesta funció aplica l'algorisme de Dijkstra per determinar
+    * la distància mínima tant per al jugador actual com per a l'enemic.
+    *
+    * @param estat Estat actual del tauler.
+    * @param color Color del jugador actual (1 o -1).
+    * @return Una instància de la classe Dijkstra amb les mètriques calculades.
+    */
     public Dijkstra shortestPathWithVirtualNodes(HexGameStatus estat, int color) {
         int midaTauler = estat.getSize();
         int[] distancias = new int[midaTauler * midaTauler];
@@ -231,7 +257,6 @@ public class Dijkstra {
                 }
             }
         }
-
 
         return new Dijkstra(shortestPath, viablePathsCount, viableEnemyPathsCount, enemyShortestPath);
     }

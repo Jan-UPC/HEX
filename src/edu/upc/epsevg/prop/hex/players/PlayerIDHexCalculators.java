@@ -145,7 +145,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
        int mejorValor = MENYS_INFINIT;
 
        // Limitar el nombre de moviments a avaluar
-       int numMovimientosEvaluar = Math.min(movimientos.size(), 30);
+       int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad)/2);
 
        // Avaluar cada moviment seleccionat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -253,7 +253,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
        // Ordenar moviments basant-se en una heurística
        List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-       int numMovimientosEvaluar = movimientos.size();
+       int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad));
 
        // Explorar cada moviment ordenat
        for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -344,7 +344,7 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
 
         // Ordenar moviments basant-se en una heurística
         List<MoveNode> movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = movimientos.size();
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/profundidad));
 
         // Explorar cada moviment ordenat
         for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -434,11 +434,11 @@ public class PlayerIDHexCalculators implements IPlayer, IAuto {
         if (caminoEnemigo == 0) return MENYS_INFINIT;
 
         // Càlcul de la puntuació heurística basada en diferents factors
-        /*return (10 * (estado.getSize() - caminoPropio)) 
-             + (5 * caminosViables) 
+        return (10 * (estado.getSize() - caminoPropio)) 
+             + (3 * caminosViables) 
              - (7 * (estado.getSize() - caminoEnemigo))
-             - (3 * caminosViablesEnemigo);*/
-        return 3*(caminoEnemigo - caminoPropio) + (caminosViables - caminosViablesEnemigo);
+             - (3 * caminosViablesEnemigo);
+        //return 3*(caminoEnemigo - caminoPropio) + (caminosViables - caminosViablesEnemigo);
     }
 
     /**

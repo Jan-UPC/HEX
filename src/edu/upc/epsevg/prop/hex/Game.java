@@ -26,7 +26,7 @@ public class Game {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                final int midaTauler = 8;
+                final int midaTauler = 9;
                 final int seg = 20;
                 IPlayer player2 = new H_E_X_Player(2/*GB*/);
                 IPlayer player1 = new PlayerMinimaxHexCalculators("MiniMaxHexCalculator", 6, midaTauler);

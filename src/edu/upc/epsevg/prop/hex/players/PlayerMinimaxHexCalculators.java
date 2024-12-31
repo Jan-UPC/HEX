@@ -159,7 +159,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         }
         
         // Determina el número màxim de moviments a avaluar
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 20);
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/_profMax)/2);
         Point mejorMovimiento = movimientos.get(movimientos.size()/2).getPoint();
         int mejorValor = MENYS_INFINIT;
         int profExpl = 0;
@@ -197,7 +197,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         }
 
         // Desa el millor resultat a la taula de transposició
-        transpositionTable.store(hash, profExpl, mejorValor, TranspositionTable.EXACT, mejorMovimiento);
+        transpositionTable.store(hash, profExpl, mejorValor, TranspositionTable.beta, mejorMovimiento);
         long finalTime = System.currentTimeMillis();
         long realTime = finalTime - initialTime;
         _totalTime += realTime;
@@ -270,7 +270,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         // Ordena els moviments per heurística ràpida 
         List<MoveNode> movimientos;
         movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 20); // Limita el nombre de moviments a avaluar
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/_profMax)); // Limita el nombre de moviments a avaluar
         
         // Itera pels moviments seleccionats
         for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -355,7 +355,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
         // Ordenar moviments per heurística ràpida
         List<MoveNode> movimientos;
         movimientos = ordenarMovimientosRapido(estado);
-        int numMovimientosEvaluar = Math.min(movimientos.size(), 20); // Limita el nombre de moviments a avaluar
+        int numMovimientosEvaluar = Math.min(movimientos.size(), (150/_profMax)); // Limita el nombre de moviments a avaluar
         
         // Itera pels moviments seleccionats
         for (int i = 0; i < numMovimientosEvaluar; i++) {
@@ -446,6 +446,7 @@ public class PlayerMinimaxHexCalculators implements IPlayer, IAuto {
              + (3 * caminosViables)                      // Valorar la quantitat de camins viables propis
              - (7 * (estado.getSize() - caminoEnemigo))  // Penalitzar camins curts de l'enemic
              - (3 * caminosViablesEnemigo);              // Penalitzar la quantitat de camins viables de l'enemic
+        //return 3*(caminoEnemigo - caminoPropio) + (caminosViables - caminosViablesEnemigo);
     }
 
     /**
